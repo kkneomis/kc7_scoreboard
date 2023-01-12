@@ -1,4 +1,3 @@
-![Admin Central button](readme_assets/exquestion.png)
 # KC7 - The Scoreboard
 
 This is the scoreboard for the kc7 game
