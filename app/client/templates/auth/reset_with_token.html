@@ -1,0 +1,38 @@
+{% extends "auth/auth_base.html" %}
+{% block body %}
+
+<div class="card o-hidden border-0 shadow-lg my-5">
+    <div class="card-body p-0">
+        <!-- Nested Row within Card Body -->
+        <div class="row">
+            <div class="col-lg-6 d-none d-lg-block bg-password-image-2"></div>
+            <div class="col-lg-6">
+                <div class="p-5">
+                    <div class="text-center">
+                        <h1 class="h4 text-gray-900 mb-2">Reset your password</h1>
+                    </div>
+                    <form class="user" action="{{ url_for('auth.reset_with_token', token=token) }}" method="POST">
+                        <div class="form-group">
+                            <input type="password" class="form-control form-control-user"
+                                id="exampleInputEmail" aria-describedby="emailHelp" name="email" 
+                                placeholder="new password" value="{{ request.form.password }}">
+                            {{ form.csrf_token }}
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-user btn-block">
+                            Reset Password
+                        </button>
+                    </form>
+                    <hr>
+                    <div class="text-center">
+                        <a class="small" href="/register">Create an Account!</a>
+                    </div>
+                    <div class="text-center">
+                        <a class="small" href="/login">Already have an account? Login!</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

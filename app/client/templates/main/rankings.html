@@ -1,0 +1,71 @@
+{% extends "main/base.html" %}
+{% block body %}
+
+
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.css">
+  
+
+<!-- Page Heading -->
+<section class="jumbotron text-center">
+  <div class="container">
+    <h1 class="jumbotron-heading">🏆 Scoreboard </h1>
+  </div>
+</section>
+
+
+<!-- Begin Page Content -->
+<div class="container-fluid">
+
+  <!-- DataTales Example -->
+  <div class="card shadow mb-4">
+    <div class="card-header py-3">
+      <h6 class="m-0 font-weight-bold text-primary">User Rankings</h6>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover table-sm" id="dataTable" width="100%" cellspacing="0">
+          <thead>
+            <tr>
+              <th>Place</th>
+              <th>Name</th>
+              <th>Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+            <tr>
+              <th scope="row">{{ user.place }}</th>
+              <td>{{ user.username }}</td>
+              <td>{{ user.score }} </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+</div>
+
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.js"></script>
+<script>
+
+$(document).ready(function () {
+    var t = $('#dataTable').DataTable({
+        columnDefs: [
+            {
+                searchable: false,
+                orderable: true,
+                targets: 0,
+            },
+        ],
+        order: [[2, 'desc']],
+        pageLength: 100
+    });
+ 
+});
+
+</script>
+
+{% endblock %}
