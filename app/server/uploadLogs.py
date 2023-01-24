@@ -43,7 +43,7 @@ class LogUploader():
         kcsb_data = KustoConnectionStringBuilder.with_aad_application_key_authentication(self.KUSTO_URI,
                                                                                         self.client_id, self.client_secret, self.AAD_TENANT_ID)
     
-
+        #TODO handle errors here
         self.ingest = QueuedIngestClient(kcsb_ingest)
         self.client = KustoClient(kcsb_data)
      

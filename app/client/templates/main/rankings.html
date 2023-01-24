@@ -8,7 +8,7 @@
 <!-- Page Heading -->
 <section class="jumbotron text-center">
   <div class="container">
-    <h1 class="jumbotron-heading">🏆 Scoreboard </h1>
+    <h1 class="jumbotron-heading">🏆 Scoreboard - {{game_session.name}} </h1>
   </div>
 </section>
 
@@ -34,9 +34,9 @@
           <tbody>
             {% for user in users %}
             <tr>
-              <th scope="row">{{ user.place }}</th>
+              <th scope="row">{{ user.get_place(game_session.id) }}</th>
               <td>{{ user.username }}</td>
-              <td>{{ user.score }} </td>
+              <td>{{ user.get_score_by_session(game_session.id) }} </td>
             </tr>
             {% endfor %}
           </tbody>

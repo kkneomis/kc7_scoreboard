@@ -1,6 +1,6 @@
 # Import internal modules
 from app.server.models import db
-from app.server.models import GameSession, Solves, Challenges, Users
+from app.server.models import GameSessions, Solves, Challenges, Users
 from app import cache
 
 # Import external modules
@@ -42,7 +42,7 @@ def ordinalize(n):
 
 
 @cache.memoize(timeout=60)
-def get_user_standings():
+def get_user_standings(game_session_id):
     scores = (
         db.session.query(
             Solves.user_id.label("user_id"),
@@ -51,6 +51,8 @@ def get_user_standings():
             # db.func.max(Solves.date).label("date"),
         )
         .join(Challenges)
+        .join(GameSessions)
+        .filter(GameSessions.id == game_session_id)
         .filter(Challenges.value != 0)
         .filter(Solves.user_id != 1)
         .group_by(Solves.user_id)
