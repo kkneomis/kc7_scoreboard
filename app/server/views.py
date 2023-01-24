@@ -143,12 +143,12 @@ def dashboard():
     Dashboard
     """
     # session_ids = Registrations.get_sessions_by_user(user_id=current_user.id)
-    sessions = current_user.game_sessions
+    # sessions = current_user.game_sessions
+    sessions = Users.query.get(current_user.id).game_sessions
     # sessions = [
     #     db.session.query(GameSessions).get(session_id)
     #     for session_id in list(set(session_ids))
     # ]
-
     return render_template("main/dashboard.html", sessions=sessions)
 
 
