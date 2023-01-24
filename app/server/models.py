@@ -121,11 +121,14 @@ class Users(AuthBase, RoleMixin):
             db.session.query(Registrations)
             .filter(Registrations.user_id == self.id )
         )
-        return [
-            GameSessions.query.get(registration.user_id)
-            for registration in registrations
-        ]
+
+        session_ids = list(set([r.game_session_id for r in registrations]))
         
+        return [
+            GameSessions.query.get(registration)
+            for registration in session_ids
+        ]
+
 
     @cache.memoize()
     def get_score(self, admin=False):
