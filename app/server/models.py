@@ -86,6 +86,10 @@ class Users(AuthBase, RoleMixin):
         'Challenges', secondary='solves', backref="users", lazy=True
     )
 
+    registrations = db.relationship(
+        'GameSessions', secondary='registrations', backref="users", lazy=True
+    )
+
     def __init__(self, username, password, email, team):
         self.username = username
         self.set_password(password)
@@ -101,10 +105,27 @@ class Users(AuthBase, RoleMixin):
     def solves(self):
         return self.get_solves()
 
-
     @property
     def score(self):
         return self.get_score()
+
+    def score_by_session(self, game_session_id):
+        return 999
+
+    @property
+    def game_sessions(self):
+        return self.get_game_sessions()
+
+    def get_game_sessions(self):
+        registrations = (
+            db.session.query(Registrations)
+            .filter(Registrations.user_id == self.id )
+        )
+        return [
+            GameSessions.query.get(registration.user_id)
+            for registration in registrations
+        ]
+        
 
     @cache.memoize()
     def get_score(self, admin=False):
@@ -123,9 +144,29 @@ class Users(AuthBase, RoleMixin):
         else:
             return 0
 
+
+    @cache.memoize()
+    def get_score_by_session(self, game_session_id, admin=False):
+        score = db.func.sum(Challenges.value).label("score")
+        user = (
+            db.session.query(Solves.user_id, score)
+            .join(Users, Solves.user_id == Users.id)
+            .join(Challenges, Solves.challenge_id == Challenges.id)
+            .join(GameSessions, Challenges.game_session_id == GameSessions.id)
+            .filter(Challenges.game_session_id == game_session_id)
+            .filter(Users.id == self.id)
+        )
+
+        user = user.group_by(Solves.user_id).first()
+
+        if user:
+            return int(user.score or 0)
+        else:
+            return 0
+
     
     @cache.memoize()
-    def get_place(self, admin=False, numeric=False):
+    def get_place(self, game_session_id, admin=False, numeric=False ):
         """
         This method is generally a clone of CTFd.scoreboard.get_standings.
         The point being that models.py must be self-reliant and have little
@@ -135,7 +176,7 @@ class Users(AuthBase, RoleMixin):
         from app.server.utils import get_user_standings
         from  app.server.utils import ordinalize
 
-        standings = get_user_standings()
+        standings = get_user_standings(game_session_id=game_session_id)
 
         for i, user in enumerate(standings):
             if user.user_id == self.id:
@@ -154,9 +195,9 @@ class Users(AuthBase, RoleMixin):
         else:
             return None
 
-    @property
-    def place(self):
-        return self.get_place()
+    # @property
+    # def place(self):
+    #     return self.get_place()
 
     
     def set_password(self, password):
@@ -234,21 +275,72 @@ class Report(AuthBase):
 ##########################################################
 # The following classes are specific to game sessions
 ###########################################################
+# registrations = db.Table('registrations',
+#     db.Column('game_session_id', db.Integer, db.ForeignKey('game_sessions.id'), primary_key=True),
+#     db.Column('user_id', db.Integer, db.ForeignKey('users.user_id'), primary_key=True)
+# )
 
-# Define the Role data-model
-class GameSession(Base):
+
+class GameSessions(Base):
+    __tablename__ = 'game_sessions'
     id              = db.Column(db.Integer(), primary_key=True)
     state           = db.Column(db.Boolean)
-    start_time      = db.Column(db.String(50)) #should be given as a timestamp float
-    seed_date       = db.Column(db.String(50))  
-    time_multiplier = db.Column(db.Integer())
+    name            = db.Column(db.String(50))
+    password        = db.Column(db.String(50)) #should be given as a timestamp float
+    # registrations = db.relationship(
+    #     "Users", secondary='registrations', backref="game_sessions", lazy=True
+    # )
 
-    def __init__(self, state, start_time, seed_date="2022-01-01", time_multiplier=1000):
+    # registrants = db.relationship('Registrations', secondary=registrations, lazy='subquery',
+    #     backref=db.backref('game_sessions', lazy=True))
+
+    def __init__(self, name:str, password:str, state:bool):
         self.state = False
-        self.seed_date = seed_date    # starting date for the game
-        self.start_time = start_time  # real life start time of game
-        self.time_multiplier = time_multiplier
+        self.password = password    # starting date for the game
+        self.name = name  # real life start time of game
 
+    
+    def validate_password(self, password) -> bool:
+        return self.password == password
+
+    @property
+    def registrants(self) -> "list[int]":
+        return list(set([registration.user_id for registration in self.get_registrations()]))
+
+
+    @property
+    def solver_names(self) -> "list[str]":
+        """Take a list of user_ids for solvers and returns their names"""
+        return list(set([solver.username for solver in self.get_solvers()]))
+
+    def get_registrations(self):
+        return Registrations.query.filter_by(game_session_id=self.id)
+        
+    def __repr__(self):
+        return "<Session %r>" % self.name
+
+
+# DB item is intermediarry between user and GameSession
+# A user may participate in an instance of a game by registering for it
+# Registration allows you to access the questions in the particular instance of a game
+
+
+class Registrations(Base):
+    __tablename__ = 'registrations'
+    id                          = db.Column(db.Integer(), primary_key=True)
+    game_session_id             = db.Column(db.Integer, db.ForeignKey('game_sessions.id', ondelete="CASCADE"))
+    user_id                     = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete="CASCADE"))
+
+    def __init__(self, game_session_id:int, user_id:int):
+        self.game_session_id = game_session_id
+        self.user_id = user_id
+
+    @staticmethod
+    def get_sessions_by_user( user_id):
+        return [
+            registration.game_session_id for registration in 
+            Registrations.query.filter_by(user_id=user_id)
+        ]
 
 ##################################################################
 # The following classes are specific to scoring system for the game
@@ -256,24 +348,29 @@ class GameSession(Base):
 
 # Class represents a question posed to to users during the walk through
 # these are created by the admin and can be "solved" by other others
+# each challenge belongs to a session
 class Challenges(db.Model):
-    __tablename__ = "challenges"
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80))
-    category = db.Column(db.String(80))
-    description = db.Column(db.Text)
-    answer = db.Column(db.String(80))
-    value = db.Column(db.Integer)
-    solves = db.relationship(
-        "Users", secondary='solves', backref="challenges", lazy=True
-    )
+    __tablename__           = "challenges"
+    id                      = db.Column(db.Integer, primary_key=True)
+    name                    = db.Column(db.String(80))
+    category                = db.Column(db.String(80))
+    description             = db.Column(db.Text)
+    answer                  = db.Column(db.String(80))
+    value                   = db.Column(db.Integer)
+    solves                  = db.relationship(
+                                "Users", secondary='solves', backref="challenges", lazy=True
+                            )
 
-    def __init__(self, name:str, description:str, answer:str, category:str, value:int) -> None:
+    game_session_id       = db.Column(db.Integer, db.ForeignKey('game_sessions.id'))
+    game_session          = db.relationship('GameSessions', backref=db.backref('challenges', lazy='dynamic'))
+
+    def __init__(self, name:str, description:str, answer:str, category:str, value:int, game_session) -> None:
         self.name = name
         self.description = description
         self.value = value
         self.answer = answer
         self.category = category or "None"
+        self.game_session = game_session
 
     @property
     def solvers(self) -> "list[int]":

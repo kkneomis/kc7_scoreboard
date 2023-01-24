@@ -38,7 +38,7 @@ mail = Mail(app)
 # Import a module / component using its blueprint handler variable (mod_auth)
 from app.server.views import main
 from app.server.auth.auth_views import auth
-from app.server.models import Users, Team, Roles, GameSession
+from app.server.models import Users, Team, Roles, GameSessions
 
 # Register blueprint(s)
 app.register_blueprint(main)
@@ -82,6 +82,7 @@ def before_first_request():
     if not Team.query.first():
         print("Creating admins teams")
         db.session.add(Team(name='admins', score=0))
+        db.session.add(Team(name='default', score=0))
         db.session.commit()
     else:
         pass
@@ -95,7 +96,9 @@ def before_first_request():
 
     if not Roles.query.first():
         admin_role = Roles(name='Admin')
+        manager_role = Roles(name='Manager')
         db.session.add(admin_role)
+        db.session.add(manager_role)
         db.session.commit()
     else:
         admin_role = Roles.query.first()
@@ -112,14 +115,23 @@ def before_first_request():
             team=admin_team
         )
 
+        test_user = Users(
+            username='test',
+            email='test@test.com',
+            password= 'test',
+            team=admin_team
+        )
+
         admin_user.roles = [admin_role]
+        test_user.roles = [manager_role]
         db.session.add(admin_user)
+        db.session.add(test_user)
         db.session.commit()
 
-    current_session = db.session.query(GameSession).get(1)
-    if not GameSession.query.all():
+    current_session = db.session.query(GameSessions).get(1)
+    if not GameSessions.query.all():
         try:
-            current_session = GameSession(state=True, start_time=datetime.now())
+            current_session = GameSessions(state=True, start_time=datetime.now())
             db.session.add(current_session)
             db.session.commit()
             print("Created a new game session!")

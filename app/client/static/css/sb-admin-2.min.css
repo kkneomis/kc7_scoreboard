@@ -9120,7 +9120,7 @@ form.user .btn-user{
 }
 footer.sticky-footer{
     padding:2rem 0;
-    flex-shrink:0
+    flex-shrink:0;
 }
 footer.sticky-footer .copyright{
     line-height:1;
@@ -9129,3 +9129,5 @@ footer.sticky-footer .copyright{
 body.sidebar-toggled footer.sticky-footer{
     width:100%
 }
+
+

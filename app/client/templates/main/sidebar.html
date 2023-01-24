@@ -12,18 +12,39 @@
     <!-- Divider -->
     <hr class="sidebar-divider my-0">
 
-    <!-- Nav Item - Dashboard -->
+    
+     <!-- Nav Item - Dashboard -->
+    {% if game_session  is defined %}
+     <li class="nav-item active">
+      <a class="nav-link" href="/challenges/{{game_session.id}}">
+        <i class="fas fa-fw fa-list"></i>
+        <span>Challenges</span></a>
+    </li>
+
     <li class="nav-item active">
-      <a class="nav-link" href="/rankings">
+      <a class="nav-link" href="/rankings/{{game_session.id}}">
         <i class="fas fa-fw fa-trophy"></i>
         <span>Rankings</span></a>
     </li>
-     <!-- Nav Item - Dashboard -->
-     <li class="nav-item active">
-      <a class="nav-link" href="/challenges">
-        <i class="fas fa-fw fa-question"></i>
-        <span>Challenges</span></a>
+    <!-- Nav Item - Dashboard -->
+    <li class="nav-item active">
+      <a class="nav-link" href="/dashboard">
+        <i class="fas fa-fw fa-arrow-left"></i>
+        <span>Back to all Games</span></a>
     </li>
+    {% else %}
+
+    <li class="nav-item active">
+      <a class="nav-link" href="/dashboard">
+        <i class="fas fa-fw fa-table"></i>
+        <span>Start Here</span></a>
+    </li>
+
+    {% endif %}
+
+    
+
+    
 
     <!-- Divider -->
     <hr class="sidebar-divider">
@@ -51,10 +72,11 @@
       </a>
       <div id="collapseAdmin" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
         <div class="bg-white py-2 collapse-inner rounded">
-          <a class="collapse-item" href="/admin/manage_game">Manage the Game</a>
+          <!-- <a class="collapse-item" href="/admin/manage_game">Manage the Game</a> -->
           <a class="collapse-item" href="/admin/teams">Manage Teams</a>
           <a class="collapse-item" href="/admin/users">Manage Users</a>
-          <a class="collapse-item" href="/admin/manage_database">Manage ADX Perms</a>
+          <a class="collapse-item" href="/admin/sessions">Manage Sessions</a>
+          <!-- <a class="collapse-item" href="/admin/manage_database">Manage ADX Perms</a> -->
         </div>
       </div>
     </li>

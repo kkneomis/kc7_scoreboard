@@ -1,0 +1,84 @@
+{% extends "main/base.html" %}
+{% block body %}
+
+  <!-- Page Heading -->
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Manage Sessions</h1>
+  </div>
+
+    <!-- Content Row -->
+    <div class="row">
+      <div class="col-md-12">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Current Sessions</h6>
+        </div>
+        <div class="card-body">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Session Name</th>
+                <th>Users Count</th>
+                <th>Users </th>
+                <th>Password</th>
+                <th>State</th>
+                <th>Delete</th>
+              </tr>
+            </thead>
+              {% for session in sessions %}
+              <tr>
+                <td>{{ session.id }}</td>
+                <td>{{ session.name}}</td>
+                <td>{{ session.registrants | length }}</td>
+                <td>
+                    {% for registrant_id in session.registrants  %}
+                    <span class="badge badge-primary">{{ get_user(registrant_id).username }}</span>
+                    {% endfor %}
+                </td>
+                <td>{{ session.password }}</td>
+                <td>{{ session.state }}</td>
+                <td>
+                  <form action="/delsession" method="POST">
+                    <input type="hidden" name="session_id" value="{{ session.id }}">
+                    <input type="submit" class="btn btn-danger btn-block btn-sm"  value="Delete this session"
+                    onclick="return confirm('Are you sure you want to delete this session?')">
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </table>
+        </div>
+      </div>
+        
+      </div><!-- end of row-->
+    
+
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Add a new Session</h6>
+            </div>
+            <div class="card-body">
+              <form action='/create_session' method="POST">
+                <div class="form-group row">
+                  <label class="col-md-3 col-form-label">Session Name: </label>
+                  <div class="col-md-3">
+                    <input type="text" class="form-control" name="session_name" placeholder="Session Name" autocomplete="off"/>
+                  </div>
+                  <div class="col-md-3">
+                    <input type="text" class="form-control" name="password" placeholder="Six Char password" autocomplete="off" maxlength="8"/>
+                  </div>
+                  <div class="col-md-3">
+                    <input type="submit" class="btn btn-primary" value="Create New Session"> 
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+
+{% endblock %}
