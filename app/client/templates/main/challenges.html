@@ -79,7 +79,7 @@
         {% if loop.index == 1 %} 
           active
         {% endif %}
-        " id="v-pills-settings-tab" data-toggle="pill" href="#{{category}}" role="tab" aria-controls="v-pills-settings" aria-selected="false">{{category}}</a>
+        " id="v-pills-settings-tab" data-toggle="pill" href="#{{category | replace(' ', '_')}}" role="tab" aria-controls="v-pills-settings" aria-selected="false">{{category}}</a>
         {% endfor %}
       </div>
     </div>
@@ -92,7 +92,7 @@
         {% else %}
           fade
         {% endif %}
-        " id="{{category}}" role="tabpanel" aria-labelledby="v-pills-settings-tab">
+        " id="{{category | replace(' ', '_') }}" role="tabpanel" aria-labelledby="v-pills-settings-tab">
             <div class="row">
             {% for challenge in challenge_items|sort(reverse=false, attribute='name') %}
                 <div class="col-xl-3 col-md-6 mb-4">
@@ -220,11 +220,6 @@
   </div>
 
 </div>
-
-
-
-
-
 
 
 {% endblock %}
