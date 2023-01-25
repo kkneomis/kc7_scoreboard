@@ -289,7 +289,7 @@ class GameSessions(Base):
     id              = db.Column(db.Integer(), primary_key=True)
     state           = db.Column(db.Boolean)
     name            = db.Column(db.String(50))
-    password        = db.Column(db.String(50)) #should be given as a timestamp float
+    password        = db.Column(db.String(50), unique=True, nullable=False) #should be given as a timestamp float
     # registrations = db.relationship(
     #     "Users", secondary='registrations', backref="game_sessions", lazy=True
     # )
