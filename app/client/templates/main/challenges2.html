@@ -1,47 +1,11 @@
 {% extends "main/base.html" %}
 {% block body %}
 
-<script>
-  $(function () {
-    var austDay = new Date();
-    var endTime = '{{game_session.end_time | safe}}';
-    austDay = new Date(endTime);
-    $('#defaultCountdown').countdown({until: austDay});
-    $('#year').text(austDay.getFullYear());
-  });
-  </script>
 
 <!-- Page Heading -->
 <section class="jumbotron text-center">
   <div class="container">
     <h1 class="jumbotron-heading">🧩 Challenges - {{game_session.name}} </h1>
-    <div class="row">
-      <div class="col-md-3"></div>
-      <div class="col-md-6 ">
-        {% if current_user.has_role('Admin') or game_session.is_managed_by(current_user) or game_session.uses_timer %}
-          <div id="defaultCountdown"></div>
-        {% endif %}
-        {% if current_user.has_role('Admin') or game_session.is_managed_by(current_user) %}
-        <form action="{{ url_for('main.enable_session_time') }}" method="POST">
-          <div class="form-check form-switch">
-            <input onChange="this.form.submit()" class="form-check-input" type="checkbox"  name="uses_timer" 
-                    id="flexSwitchCheckDefault"  
-                    {%- if game_session.uses_timer -%}
-                      checked
-                    {%- endif -%} >
-            <label class="form-check-label" for="flexSwitchCheckDefault">Time the game session?</label>
-            <input type="hidden" name="game_session_id" value="{{game_session.id}}">
-          </div>
-        </form>
-        <form action="{{ url_for('main.udpate_session_end_time') }}" method="POST">
-          <label for="time">Time:</label>
-          <input type="datetime-local" name="end_time" value="{{game_session.end_time}}">
-          <input type="hidden" name="game_session_id" value="{{game_session.id}}">
-          <input type="submit" value="Update">
-        </form>
-        {% endif %}
-      </div>
-    </div>
   </div>
 </section>
 
@@ -49,9 +13,7 @@
 <!-- Begin Page Content -->
 <div class="container-fluid">
  
-  {% 
-    if current_user.has_role('Admin') or game_session.is_managed_by(current_user)
-  %}
+  {% if current_user.has_role('Admin') %}
   <!-- DataTales Example -->
   <div class="card shadow mb-4">
     <div class="card-header py-3">
@@ -112,18 +74,25 @@
     <div class="col-3">
       
       <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-        {% for category in categories | sort %}
+        {% for category, challenge_items in challenges|groupby('category') %}
         <a class="nav-link 
-        {% if category ==  current_category%}
+        {% if loop.index == 1 %} 
           active
-        {% endif %}"  href="/challenges/{{game_session.id}}/{{category | safe}}" role="tab" aria-controls="v-pills-settings" aria-selected="false">{{category | safe}}</a>
+        {% endif %}
+        " id="v-pills-settings-tab" data-toggle="pill" href="#{{category}}" role="tab" aria-controls="v-pills-settings" aria-selected="false">{{category}}</a>
         {% endfor %}
       </div>
     </div>
     <div class="col-9">
-      <div id="v-pills-tabContent">
+      <div class="tab-content" id="v-pills-tabContent">
         {% for category, challenge_items in challenges|groupby('category') %}
-        <div class="tab-pane" id="{{hash_strings([category])}}">
+        <div class="tab-pane 
+        {% if loop.index == 1 %} 
+          active
+        {% else %}
+          fade
+        {% endif %}
+        " id="{{category}}" role="tabpanel" aria-labelledby="v-pills-settings-tab">
             <div class="row">
             {% for challenge in challenge_items|sort(reverse=false, attribute='name') %}
                 <div class="col-xl-3 col-md-6 mb-4">
@@ -217,7 +186,6 @@
                             <input type="text" class="form-control" id="answer" name="answer" placeholder="Answer">
                             {% endif%}
                           <input type="hidden" name="challenge_id"  value="{{ challenge.id}}" > 
-                          <input type="hidden" name="category"  value="{{category}}" >
                           <input type="hidden" name="game_session_id"  value="{{game_session.id}}" >
                         </div>
                         <input type="submit" class="btn btn-primary btn-sm mb-2" value="Submit"

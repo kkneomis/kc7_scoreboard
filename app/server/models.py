@@ -268,7 +268,7 @@ class Report(AuthBase):
         self.subject = subject
         self.sender = sender
         self.recipient = recipient
-        self.time = time
+        self.time = time 
         self.team = team
 
     def __repr__(self):
@@ -284,23 +284,38 @@ class Report(AuthBase):
 # )
 
 
+# intermediary between session table and users table
+# a session manager is allowed to manage a session
+session_managers = db.Table('session_managers',
+    db.Column('user_id', db.Integer, db.ForeignKey('users.user_id'), primary_key=True),
+    db.Column('session_id', db.Integer, db.ForeignKey('game_sessions.id'), primary_key=True)
+)
+
+
 class GameSessions(Base):
     __tablename__ = 'game_sessions'
     id              = db.Column(db.Integer(), primary_key=True)
-    state           = db.Column(db.Boolean)
+    uses_timer      = db.Column(db.Boolean)
     name            = db.Column(db.String(50))
     password        = db.Column(db.String(50), unique=True, nullable=False) #should be given as a timestamp float
-    # registrations = db.relationship(
-    #     "Users", secondary='registrations', backref="game_sessions", lazy=True
-    # )
+    end_time        = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    
+    managers = db.relationship('Users', secondary=session_managers,
+                           backref=db.backref('sessions', lazy='dynamic'))
 
-    # registrants = db.relationship('Registrations', secondary=registrations, lazy='subquery',
-    #     backref=db.backref('game_sessions', lazy=True))
 
-    def __init__(self, name:str, password:str, state:bool):
-        self.state = False
+    def __init__(self, name:str, password:str, uses_timer:bool,  end_time=None):
+        self.uses_timer = False
         self.password = password    # starting date for the game
         self.name = name  # real life start time of game
+        self.end_time = end_time 
+
+
+    def is_managed_by(self, user:Users):
+        """Check is session is managed by a particular user"""
+        if user.id in [m.id for m in self.managers]:
+            return True
+        return False
 
     
     def validate_password(self, password) -> bool:
@@ -326,8 +341,6 @@ class GameSessions(Base):
 # DB item is intermediarry between user and GameSession
 # A user may participate in an instance of a game by registering for it
 # Registration allows you to access the questions in the particular instance of a game
-
-
 class Registrations(Base):
     __tablename__ = 'registrations'
     id                          = db.Column(db.Integer(), primary_key=True)

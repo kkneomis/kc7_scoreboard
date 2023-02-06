@@ -33,20 +33,6 @@ def home():
     return redirect(url_for('main.dashboard'))
 
 
-@main.route("/admin/manage_game")
-@roles_required('Admin')
-@login_required
-def manage_game():
-    """
-    Manage the state of the game. 
-    Ideally: start, stop, restart
-    """
-    current_session = db.session.query(GameSessions).get(1)
-    game_state = current_session.state
-
-
-    return render_template("admin/manage_game.html", game_state=game_state)
-
 
 @main.route("/admin/manage_database")
 @roles_required('Admin')
@@ -81,12 +67,14 @@ def manage_users():
 @login_required
 def manage_sessions():
     sessions = GameSessions.query.all()
+    users = Users.query.all()
 
     def get_user(user_id: int):
         return Users.query.get(user_id)
 
     return render_template("admin/manage_sessions.html",
                            sessions=sessions,
+                           users = users,
                            get_user=get_user)
 
 
@@ -123,16 +111,7 @@ def delete_game_session():
     session =  db.session.query(GameSessions).get(session_id)
     db.session.delete(session)
     db.session.commit()
-    # try:
-    #     session_id = request.form['session_id']
-    #     print(session_id)
-    #     session = GameSessions.query.get(session_id)
-    #     db.session.delete(session)
-    #     db.session.commit()
-    #     flash("Session removed!", 'success')
-    # except Exception as e:
-    #     print("Error: %s" % e)
-    #     flash("Failed to remove session", 'error')
+
     return redirect(url_for('main.manage_sessions'))
 
 
@@ -257,22 +236,70 @@ def teams():
 ##################
 # Challenge solves
 #################
-@main.route("/challenges/<int:game_session_id>")
+@main.route("/challenges/<int:game_session_id>", defaults={'category': None})
+@main.route("/challenges/<int:game_session_id>/<string:category>")
 @login_required
-def challenges(game_session_id=None):
+def challenges(game_session_id=None, category=None):
+    import hashlib
+    def hash_strings(strings):
+        sha = hashlib.sha256()
+        for s in strings:
+            sha.update(s.encode('utf-8'))
+        return sha.hexdigest()
+
     game_session = GameSessions.query.get(game_session_id) or abort(404)
     if current_user.id not in game_session.registrants:
         abort(404)
 
-    challenges = Challenges.query.filter_by(game_session=game_session).all()
-    solves = Solves.query.all()
-    users = Users.query.all()
+    try:
+        categories = (
+            Challenges.query
+            .filter_by(
+                game_session=game_session
+            ).all()
+        ) 
+    except Exception as e:
+        print(f"got no results when trying to get categories {e}")
+        categories = []
+
+    print(categories)
+
+    categories = list(set([c.category for c in categories]))
+    categories.sort()
+
+    if category:
+        challenges = (
+            Challenges.query
+            .filter_by(
+                game_session=game_session,
+                category=category
+            ).all()
+        )
+        if not challenges:
+            abort(404)
+    elif len(categories) > 0:
+        # just get stuff from the first category
+        challenges = (
+            Challenges.query
+            .filter_by(
+                game_session=game_session,
+                category=categories[0]
+            ).all()
+        )
+    else:
+        challenges = (
+            Challenges.query
+            .filter_by(
+                game_session=game_session
+            ).all()
+        )
 
     return render_template("main/challenges.html", 
                             challenges=challenges, 
-                            solves=solves, 
-                            users=users,
-                            game_session = game_session)
+                            categories=categories,
+                            current_category = category,
+                            game_session = game_session,
+                            hash_strings = hash_strings)
 
 
 @main.route("/rankings/<int:game_session_id>")
@@ -287,31 +314,34 @@ def rankings(game_session_id=None):
     return render_template("main/rankings.html", users=users, game_session=game_session)
 
 
+
 @main.route('/addchallenge', methods=['POST', 'GET'])
 @login_required
-@roles_required('Admin')
 def create_challenge():
     name =  request.form['challenge_name']
     value = request.form['value']
     description = request.form['description']
     answer = request.form['answer']
-    category = request.form['answer'] or None
+    category = request.form['category'] or None
     game_session_id = request.form['game_session_id'] 
 
     #get game session object
     game_session = db.session.query(GameSessions).get(game_session_id)
 
-    challenge = Challenges(
-        name=name, 
-        description=description, 
-        answer=answer, 
-        value=value, 
-        category=category,
-        game_session= game_session
-    )
-    db.session.add(challenge)
-    db.session.commit()
-    flash(f"Added new challenge: {challenge.name}", "success")
+    if game_session.is_managed_by(current_user):      
+        challenge = Challenges(
+            name=name, 
+            description=description, 
+            answer=answer, 
+            value=value, 
+            category=category,
+            game_session= game_session
+        )
+        db.session.add(challenge)
+        db.session.commit()
+        flash(f"Added new challenge: {challenge.name}", "success")
+    else:
+        flash(f"You aren't allowed to perform this action", "error")
 
     return redirect(url_for('main.challenges', game_session_id=game_session_id))
 
@@ -368,7 +398,6 @@ def create_challenges_from_file():
 
 @main.route('/editchallenge', methods=['POST', 'GET'])
 @login_required
-@roles_required('Admin')
 def edit_challenge():
     """Edit all the values for a challenge"""
     # get all the values from the form
@@ -384,6 +413,10 @@ def edit_challenge():
 
     # find the challenge db object using its id from the form
     challenge = db.session.query(Challenges).get(challenge_id)
+
+    if not challenge.game_session.is_managed_by(current_user):
+        # user is not authorized to do this action
+        return redirect(url_for('main.challenges', game_session_id=game_session_id))
 
     # update all the values
     challenge.name = name
@@ -423,9 +456,14 @@ def solve_challenge():
     answer = request.form['answer']
     challenge_id = request.form['challenge_id']
     game_session_id = request.form['game_session_id']
+    category = request.form['category']
     challenge = db.session.query(Challenges).get(challenge_id)
+
+    if challenge.game_session.uses_timer and \
+        challenge.game_session.end_time < datetime.now():
+        flash("This session has expired. You can no longer solve challenges.", "error")
+        return redirect(url_for('main.challenges', game_session_id=game_session_id))
     
-    print(challenge.solvers)
     if answer.lower() in [a.lower() for a in challenge.answer.split(";")]:
         print("answer is correct")
         try:
@@ -441,7 +479,9 @@ def solve_challenge():
         print("incorrect answer")
         flash(f"Incorrect answer for {challenge.name}, try again", "error")
 
-    return redirect(url_for('main.challenges', game_session_id=game_session_id))
+    return redirect(url_for('main.challenges', 
+                        game_session_id=game_session_id,
+                        category=category ))
 
 
 @login_required
@@ -485,7 +525,14 @@ def create_session():
     try:
         session_name = request.form['session_name']
         password = request.form['password']
-        session = GameSessions(state=True, name=session_name, password=password)
+        try:
+            manager_id = request.form['manager_id']
+            manager = Users.query.get(manager_id) or current_user
+        except:
+            manager = current_user
+
+        session = GameSessions(uses_timer=False, name=session_name, password=password)
+        session.managers.append(manager)
         db.session.add(session)
         db.session.commit()
         flash("Added a new session", 'success')
@@ -494,3 +541,40 @@ def create_session():
         flash("Could not create this Session", 'error')
     return redirect(url_for('main.manage_sessions'))
 
+@main.route("/udpate_session_end_time", methods=['POST'])
+@login_required
+def udpate_session_end_time():
+    end_time = request.form['end_time']
+    game_session_id = request.form['game_session_id']
+    game_session = GameSessions.query.get(game_session_id)
+
+    if game_session.is_managed_by(current_user):
+        end_time = datetime.strptime(end_time, '%Y-%m-%dT%H:%M')
+        game_session.end_time = end_time
+
+        db.session.add(game_session)
+        db.session.commit()
+
+    return redirect(url_for('main.challenges', game_session_id=game_session_id))
+
+
+@main.route("/enable_session_time", methods=['POST'])
+@login_required
+def enable_session_time():
+    print(request.form)
+    uses_timer = request.form.get('uses_timer', 'off')
+    game_session_id = request.form['game_session_id']
+    game_session = GameSessions.query.get(game_session_id)
+
+    if uses_timer == "on":
+        uses_timer = True
+    else:
+        uses_timer = False
+
+    if game_session.is_managed_by(current_user):
+        game_session.uses_timer = uses_timer
+
+        db.session.add(game_session)
+        db.session.commit()
+
+    return redirect(url_for('main.challenges', game_session_id=game_session_id))
