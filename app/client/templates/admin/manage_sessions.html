@@ -6,6 +6,38 @@
     <h1 class="h3 mb-0 text-gray-800">Manage Sessions</h1>
   </div>
 
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Add a new Session</h6>
+        </div>
+        <div class="card-body">
+          <form action='/create_session' method="POST">
+            <div class="form-group row">
+              <div class="col-md-3">
+                <input type="text" class="form-control" name="session_name" placeholder="Session Name" autocomplete="off"/>
+              </div>
+              <div class="col-md-3">
+                <input type="text" class="form-control" name="password" placeholder="Six Char password" autocomplete="off" maxlength="8"/>
+              </div>
+              <div class="col-md-3">
+                <select class="form-select form-control" aria-label="Manager" name="manager_id">
+                  {% for user in users %}
+                    <option value="{{user.id}}">{{user.username}} ({{user.id}})</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-3">
+                <input type="submit" class="btn btn-primary" value="Create New Session"> 
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
     <!-- Content Row -->
     <div class="row">
       <div class="col-md-12">
@@ -21,9 +53,11 @@
                 <th>Session Name</th>
                 <th>Users Count</th>
                 <th>Users </th>
+                <th>Managers </th>
                 <th>Password</th>
                 <th>State</th>
                 <th>Delete</th>
+                <th>End Time</th>
               </tr>
             </thead>
               {% for session in sessions %}
@@ -36,6 +70,11 @@
                     <span class="badge badge-primary">{{ get_user(registrant_id).username }}</span>
                     {% endfor %}
                 </td>
+                <td>
+                  {% for manager in session.managers  %}
+                  <span class="badge badge-primary">{{ manager.username }}</span>
+                  {% endfor %}
+                </td>
                 <td>{{ session.password }}</td>
                 <td>{{ session.state }}</td>
                 <td>
@@ -45,6 +84,7 @@
                     onclick="return confirm('Are you sure you want to delete this session?')">
                   </form>
                 </td>
+                <td>{{ session.end_time }}</td>
               </tr>
               {% endfor %}
             </table>
@@ -52,33 +92,6 @@
       </div>
         
       </div><!-- end of row-->
-    
-
-      <div class="row">
-        <div class="col-md-12">
-          <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Add a new Session</h6>
-            </div>
-            <div class="card-body">
-              <form action='/create_session' method="POST">
-                <div class="form-group row">
-                  <label class="col-md-3 col-form-label">Session Name: </label>
-                  <div class="col-md-3">
-                    <input type="text" class="form-control" name="session_name" placeholder="Session Name" autocomplete="off"/>
-                  </div>
-                  <div class="col-md-3">
-                    <input type="text" class="form-control" name="password" placeholder="Six Char password" autocomplete="off" maxlength="8"/>
-                  </div>
-                  <div class="col-md-3">
-                    <input type="submit" class="btn btn-primary" value="Create New Session"> 
-                  </div>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-        
-      </div>
+ </div>
 
 {% endblock %}
