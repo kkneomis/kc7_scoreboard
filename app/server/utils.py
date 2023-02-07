@@ -72,3 +72,8 @@ def get_user_standings(game_session_id):
     standings = standings_query.all()
 
     return standings
+
+
+def generate_password(length=8):
+    chars = string.ascii_letters + string.digits 
+    return ''.join(random.choice(chars) for _ in range(length))

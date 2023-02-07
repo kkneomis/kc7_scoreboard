@@ -8,41 +8,10 @@
 
     <!-- Content Row -->
     <div class="row">
-      
-      <!-- Bar Chart -->
-      <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Users</h6>
-        </div>
-        <div class="card-body">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>User Name</th>
-                <th>Delete</th>
-              </tr>
-            </thead>
-              {% for user in users %}
-              <tr>
-                <td>{{ user.id }}</td>
-                <td>{{ user.username}}</td>
-                <td>
-                  <form action="/deluser" method="post">
-                    <input type="hidden" name="user_id" value="{{ user.id }}">
-                    <input type="submit" class="btn btn-danger btn-block btn-sm"  value="Delete this user"
-                    onclick="return confirm('Are you sure you want to delete this user?')">
-                  </form>
-                </td>
-              </tr>
-              {% endfor %}
-            </table>
-        </div>
-      </div>
-      <!-- Bar Chart -->
+      <div class="col-md-12">
       <div class="card shadow mb-8">
         <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Users</h6>
+            <h6 class="m-0 font-weight-bold text-primary">Add Users</h6>
         </div>
         <div class="card-body">
           <form method="POST"  enctype="multipart/form-data" action="{{ url_for('auth.create_users_from_file') }}" id="fileuploadform">
@@ -64,10 +33,64 @@
           </form>
         </div>
       </div>
-      </div><!-- end of row-->
+    </div>
+    </div><!-- end of row-->
     
 
-        
+    <div class="row">
+      <div class="col-md-12">
+        <!-- Bar Chart -->
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Users</h6>
+        </div>
+        <div class="card-body">
+          <table class="table" id="usersTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>User Name</th>
+                <th>User Email</th>
+                <th>Delete</th>
+              </tr>
+            </thead>
+              {% for user in users %}
+              <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.username}}</td>
+                <td>{{ user.email}}</td>
+                <td>
+                  <form action="/deluser" method="post">
+                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                    <input type="submit" class="btn btn-danger btn-block btn-sm"  value="Delete this user"
+                    onclick="return confirm('Are you sure you want to delete this user?')">
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </table>
+        </div>
       </div>
+      <!-- Bar Chart -->
+      </div>
+    </div>
+
+    <script>
+      $(document).ready(function () {
+          var t = $('#usersTable').DataTable({
+              columnDefs: [
+                  {
+                      searchable: false,
+                      orderable: true,
+                      targets: 0,
+                  },
+              ],
+              order: [[0, 'desc']],
+              pageLength: 100
+          });
+      });
+      </script>
+
+        
 
 {% endblock %}

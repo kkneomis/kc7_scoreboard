@@ -1,0 +1,73 @@
+{% if current_user.has_role('Admin') or game_session.is_managed_by(current_user) %}
+<!-- Page Heading -->
+<section class="jumbotron text-left">
+  <div class="container">
+    <div class="row">
+        Session Managers:&nbsp;
+        {% for user in game_session.managers %}
+              <form action="/removemanager" method="post">
+                <input type="hidden" name="user_id" value="{{ user.id }}">
+                <input type="hidden" value="{{game_session.id}}" name="game_session_id" >
+                <input type="submit" class="btn btn-danger btn-block btn-sm"  value="{{user.username}} x"
+                onclick="return confirm('Would you like to remove this manager?')">
+              </form>&nbsp;
+        {% endfor %}
+
+    </div>
+    <br>
+    <div class="row">
+      <!-- <h3>Manage the game session</h3> -->
+      <div class="col-md-6 ">
+          <form method="POST" action="/editsession">
+            <div class="form-group">
+              <label for="challengeName">Session Name</label>
+              <input type="text" value="{{game_session.name}}" class="form-control" id="sessionName" placeholder="Name" name="session_name">
+            </div>
+            <div class="form-group">
+              <label for="challengeValue">Password</label>
+              <input type="text"  value="{{game_session.password}}" class="form-control" id="sessionPass" value="10" name="session_password">
+            </div>
+            <input type="hidden" value="{{game_session.id}}" name="game_session_id" >
+            <input type="submit" class="btn btn-primary btn-block" value="Update">
+          </form>
+      </div>
+      <div class="col-md-6 ">
+        <form action="{{ url_for('main.enable_session_time') }}" method="POST">
+          <div class="form-group">
+            <div class="form-check form-switch">
+              <input onChange="this.form.submit()" class="form-check-input" type="checkbox"  name="uses_timer" 
+                      id="flexSwitchCheckDefault"  
+                      {%- if game_session.uses_timer -%}
+                        checked
+                      {%- endif -%} >
+              <label class="form-check-label" for="flexSwitchCheckDefault">Time the game session?</label>
+              <input type="hidden" name="game_session_id" value="{{game_session.id}}">
+            </div>
+          </div> 
+        </form>
+        <form action="{{ url_for('main.udpate_session_end_time') }}" method="POST">
+          <div class="form-group">
+            <label for="time">Time:</label><br>
+            <input type="datetime-local" name="end_time" value="{{game_session.end_time}}">
+            <input type="hidden" name="game_session_id" value="{{game_session.id}}">
+            <input type="submit" value="Update End Time" class="btn btn-primary">
+          </div>
+        </form>
+        <form action="{{ url_for('main.add_session_manager') }}" method="POST">
+          <div class="form-group">
+            <label for="addManager">Add a manager</label><br>
+            <select class="form-select" aria-label="addManager" name="user_id">
+              <option selected>Select user to add</option>
+              {% for user in users %}
+                <option value="{{user.id}}">{{user.username}}</option>
+              {% endfor %}
+            </select>
+            <input type="submit" value="Add Session Manager" class="btn btn-primary">
+            <input type="hidden" name="game_session_id" value="{{game_session.id}}">
+          </div>
+        </form>
+      </div>
+      </div>
+    </div>
+</section>
+{% endif %}
