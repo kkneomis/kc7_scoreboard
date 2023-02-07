@@ -240,12 +240,6 @@ def teams():
 @main.route("/challenges/<int:game_session_id>/<string:category>")
 @login_required
 def challenges(game_session_id=None, category=None):
-    import hashlib
-    def hash_strings(strings):
-        sha = hashlib.sha256()
-        for s in strings:
-            sha.update(s.encode('utf-8'))
-        return sha.hexdigest()
 
     game_session = GameSessions.query.get(game_session_id) or abort(404)
     if current_user.id not in game_session.registrants:
@@ -294,12 +288,20 @@ def challenges(game_session_id=None, category=None):
             ).all()
         )
 
+    # Get all users resgistered on this session
+    users = (
+        db.session.query(Users)
+        .join(Registrations, Registrations.user_id == Users.id)
+        .filter(Registrations.game_session_id == game_session_id)
+        .filter(~Users.id.in_([m.id for m in game_session.managers]))
+    ).all()
+
     return render_template("main/challenges.html", 
                             challenges=challenges, 
                             categories=categories,
                             current_category = category,
                             game_session = game_session,
-                            hash_strings = hash_strings)
+                            users=users)
 
 
 @main.route("/rankings/<int:game_session_id>")
@@ -541,6 +543,82 @@ def create_session():
         flash("Could not create this Session", 'error')
     return redirect(url_for('main.manage_sessions'))
 
+
+@main.route("/editsession", methods=['POST'])
+@login_required
+def edit_session():
+    session_name = request.form['session_name']
+    password = request.form['session_password']
+    game_session_id = request.form['game_session_id']
+    game_session = GameSessions.query.get(game_session_id)
+
+    if not game_session.is_managed_by(current_user):
+        return redirect(url_for('main.challenges', game_session_id=game_session_id))
+       
+    try:
+        game_session.name = session_name
+        game_session.password = password
+
+        db.session.add(game_session)
+        db.session.commit()
+        flash("Updated the session", 'success')
+    except Exception as e:
+        print('Failed to update session.', e)
+        flash("Could not update this Session", 'error')
+    return redirect(url_for('main.challenges', game_session_id=game_session_id))
+
+@main.route("/add_session_manager", methods=['POST'])
+@login_required
+def add_session_manager():
+    user_id = request.form['user_id']
+    game_session_id = request.form['game_session_id']
+    game_session = GameSessions.query.get(game_session_id)
+
+    if not (game_session.is_managed_by(current_user) or current_user.has_role('Admin')):
+        return redirect(url_for('main.challenges', game_session_id=game_session_id))
+
+    user_to_add = Users.query.get(user_id)
+    game_session.managers.append(user_to_add)
+    db.session.add(game_session)
+    db.session.commit()
+
+    return redirect(url_for('main.challenges', game_session_id=game_session_id))
+
+
+@main.route("/removemanager", methods=['POST'])
+@login_required
+def remove_manager_from_session():
+    """
+    Function to remove use from a session
+    This is shameful function full of hacks
+    """
+    user_id = request.form['user_id']
+    game_session_id = request.form['game_session_id']
+    game_session = GameSessions.query.get(game_session_id)
+
+    if not (game_session.is_managed_by(current_user) or current_user.has_role('Admin')):
+        return redirect(url_for('main.challenges', game_session_id=game_session_id))
+    elif int(user_id) == current_user.id:
+        flash("You can't remove yourself as an admin silly :P")
+        return redirect(url_for('main.challenges', game_session_id=game_session_id))
+    
+
+    # .remove returns an error - probably because of class definition
+    # so we are hacking the remove instead
+    # yes, this code is bad and I should feel bad
+    # TODO: make more elegant
+    for index, user in enumerate(game_session.managers):
+        print(f"{user_id}=={user.id}")
+        if user.id == int(user_id):
+            print("removing the user")
+            game_session.managers.pop(index)
+
+    db.session.add(game_session)
+    db.session.commit()
+
+    return redirect(url_for('main.challenges', game_session_id=game_session_id))
+
+
 @main.route("/udpate_session_end_time", methods=['POST'])
 @login_required
 def udpate_session_end_time():
@@ -578,3 +656,79 @@ def enable_session_time():
         db.session.commit()
 
     return redirect(url_for('main.challenges', game_session_id=game_session_id))
+
+
+@main.route("/api/event_setup", methods=['POST', 'GET'])
+def event_setup():
+    """
+    API endpoint 
+    this will take requests from powerautomate form
+    create a new sessions and corresponding manager
+    populate session will questions based on specifications
+    return relevant info to be sent via email to user 
+    """
+    if request.method == 'GET':
+        return "This is the API endpoint for KC7 events"
+
+    if request.method == 'POST':
+        request_data = request.get_json()
+        print(request.data)
+
+    # Might need to do some scrubbing on this (the event name)
+    # Or allow users to edit this after they login later
+    event_name = request_data.get('event_name')
+    email_address = request_data.get('email_address')
+
+    # event_type should be one of ["middle school", "high school", "college", "industry", "CTI"]
+    # need to think hard about what event type will be made available
+    event_type = request_data.get('event_type')
+
+    # this keeps us from getting spammed
+    # cross check value should be stored in the config
+    auth_code = request_data.get('auth_code')
+
+    # make sure all values were supplied
+    if event_name and event_type and auth_code == "THISISASECRETVALUE":
+        pass
+    else:
+        return "Invalid request"
+
+    ## Create the admin for the new session
+    default_team = Team.query.filter_by(name='default').first()
+    admin_password = generate_password(length=10)
+    session_admin = Users(
+        username=email_address,
+        email=email_address,
+        password= admin_password,
+        team=default_team
+    )
+
+    db.session.add(session_admin)
+    db.session.commit()
+
+    # Now create the session
+    session_password = generate_password(length=6)
+    session = GameSessions(
+        uses_timer=False, 
+        name=event_name, 
+        password=session_password
+    )
+    session.managers.append(session_admin)
+    db.session.add(session)
+    db.session.commit()
+
+
+    db.session.add(
+            Registrations(session.id, session_admin.id)
+        )
+    db.session.commit()
+
+
+    #Finally return the relevant info
+    return jsonify({
+        "event_name": event_name,
+        "admin_username": session_admin.username,
+        "admin_password": admin_password,
+        "session_password": session_password
+    })
+
