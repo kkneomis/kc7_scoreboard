@@ -28,7 +28,8 @@ app = application
 # Depends on the environment (e.g. production, dev, testing...)
 #export APPLICATION_SETTINGS='config.DevelopmentConfig' to set config
 #app.config.from_object(os.environ['APPLICATION_SETTINGS'])
-app.config.from_object('config.ProductionConfig')
+# app.config.from_object('config.ProductionConfig')
+app.config.from_object('config.DevelopmentConfig')
 #app_settings = "app.server.config.DevelopmentConfig"
 
 # Define the database object which is imported

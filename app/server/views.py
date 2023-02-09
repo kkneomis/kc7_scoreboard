@@ -371,28 +371,34 @@ def create_challenges_from_file():
             for row in reader:
                 # if isinstance(row, list):
                 #     row = row[0].split(",")
-                if row[0].lower() == "name":
+                print(row[0])
+                if row[0].lower() in ["name", "Name"]:
                     # this is the header
                     continue
-                name = row[0]
-                print(row)
-                value = row[1]
-                description = row[2]
-                answer = row[3]
-                category = row[4] or "None"
+                try:
+                    name = row[0]
+                    value = row[1]
+                    description = row[2]
+                    answer = row[3]
+                    category = row[4] or "None"
 
-                challenge = Challenges(
-                    name=name, 
-                    description=description, 
-                    answer=answer, 
-                    value=value, 
-                    category=category,
-                    game_session=game_session
-                )
-                db.session.add(challenge)
+                    challenge = Challenges(
+                        name=name, 
+                        description=description, 
+                        answer=answer, 
+                        value=value, 
+                        category=category,
+                        game_session=game_session
+                    )
+                    db.session.add(challenge)
+                    db.session.commit()
+                except Exception as e:
+                    print(f"unable to add row due to error: {e}")
+                    db.session.rollback()
+                    
     else:
         flash("Not a valid file format. Only CSV files are allowed.", "error")
-    db.session.commit()
+    
     flash(f"Added new challenges from csv", "success")
 
     return redirect(url_for('main.challenges', game_session_id=game_session_id))
