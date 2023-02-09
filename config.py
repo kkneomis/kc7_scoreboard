@@ -7,6 +7,13 @@ import os
 # in production check this out
 # https://devcenter.heroku.com/articles/config-vars#managing-config-vars
 
+def get_env_variable(name):
+    try:
+        return os.environ[name]
+    except KeyError:
+        message = "Expected env variable '{}' not set.".format(name)
+        raise Exception(message)
+    
 class BaseConfig(object):
     DEBUG = False
     TESTING = False
@@ -25,7 +32,7 @@ class BaseConfig(object):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///flaskr.db'
     
     # Secret key for signing cookie. You should replace this
-    SECRET_KEY = 'y?,???\???Z#?N'
+    SECRET_KEY = 'y?,???\???Z#?*t^_mzal(t@o01v3fee27g%rg18fc5d@'
 
     ################################
     # AZURE ENVIRONMENT VARIABLES
@@ -57,7 +64,15 @@ class TestingConfig(BaseConfig):
     DEBUG = False
     TESTING = True
 
+
     
 class ProductionConfig(BaseConfig):
     DEBUG = False
     #SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL_HERE']
+    # Set the variables
+    SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://{dbuser}:{dbpass}@{dbhost}:5432/{dbname}'.format(
+        dbuser=os.environ['DBUSER'],
+        dbpass=os.environ['DBPASS'],
+        dbhost=os.environ['DBHOST'] + ".postgres.database.azure.com",
+        dbname=os.environ['DBNAME']
+    )

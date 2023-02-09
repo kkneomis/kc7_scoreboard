@@ -30,3 +30,6 @@ Werkzeug==2.0.2
 PyYAML==6.0
 Flask-Caching==2.0.1
 names==0.3.0
+Flask-Migrate
+psycopg2
+python-dotenv

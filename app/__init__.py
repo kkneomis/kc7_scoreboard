@@ -10,6 +10,8 @@ from flask_login import LoginManager, current_user
 from flask_security import Security, SQLAlchemyUserDatastore
 from flask_caching import Cache
 from flask_mail import Mail
+from flask_migrate import Migrate
+
 
 application = Flask(
             __name__,
@@ -26,12 +28,13 @@ app = application
 # Depends on the environment (e.g. production, dev, testing...)
 #export APPLICATION_SETTINGS='config.DevelopmentConfig' to set config
 #app.config.from_object(os.environ['APPLICATION_SETTINGS'])
-app.config.from_object('config.DevelopmentConfig')
+app.config.from_object('config.ProductionConfig')
 #app_settings = "app.server.config.DevelopmentConfig"
 
 # Define the database object which is imported
 # by modules and views
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 cache = Cache(app)
 mail = Mail(app)
 
@@ -86,13 +89,7 @@ def before_first_request():
         db.session.commit()
     else:
         pass
-        # reset scores
-        #print("Admin team exists... all good :P")
-        # teams = Team.query.all()
-        # for team in teams:
-        #     team.score = 0
-        #     db.session.add(team)
-        #     db.session.commit()
+ 
 
     if not Roles.query.first():
         admin_role = Roles(name='Admin')
