@@ -1,0 +1,44 @@
+{% extends "main/base.html" %}
+{% block body %}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <h3>Edit accounts details</h3>
+            <form method="POST">
+                <div class="form-group">
+                <label for="exampleInputEmail1">Email address</label>
+                <input type="email" class="form-control" name="email"  value="{{current_user.email}}">
+                <!-- <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> -->
+                </div>
+                <div class="form-group">
+                <label for="username">user</label>
+                <input type="text" class="form-control" name="username" id="username" value="{{current_user.username}}">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Update User info</button>
+            </form>
+        </div>
+    </div>
+</div>
+<br><br><br>
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <h3>Update your password</h3>
+            <form method="POST" action="/reset_password">
+                <div class="form-group">
+                    <label for="current_password">Current Password</label>
+                    <input type="password" class="form-control" id="current_password" name="current_password" placeholder="Password">
+                </div>
+                <div class="form-group">
+                    <label for="new_password">New Password</label>
+                    <input type="password" class="form-control" id="new_password" name="new_password" placeholder="Password">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Update Password</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

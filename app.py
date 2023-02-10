@@ -13,17 +13,17 @@ _/    _/        _/_/_/       _/
     print("=============================")
     print("""A Cybersecurity Game""")
     print("=============================")
-    print("""Warning: Data will print to console as dataframe until you configure your ADX cluster.
-See: https://github.com/kkneomis/kc7/wiki/Setting-up-you-Azure-Data-Explorer-cluster-in-the-Azure-Portal \n
-If you care about the data but not the code: 
-    See: https://github.com/kkneomis/kc7/wiki/No-code-Required!-Loading-the-test-KC7-cluster-into-your-free-Kusto-instance \n
+    print("""If you just want to play
+See: https://kc7cyber.com \n
+If you want to make your own data
+    See: https://github.com/kkneomis/kc7/\n
 For training Materials:
-    See: https://github.com/kkneomis/kc7/blob/master/training_materials/KC7%20-%20Cyber%20Challenge%20Training.pdf
+    See: https://kc7cyber.com/modules
     """)
 
     print("""
 To get started go to http://127.0.0.1:8889/login
-Login username:password -> admin:admin 
+Login username:password -> admin:DefNotAdmin 
     """)
     application.run(debug=True, port="8889")
 

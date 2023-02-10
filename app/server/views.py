@@ -580,6 +580,10 @@ def add_session_manager():
     game_session_id = request.form['game_session_id']
     game_session = GameSessions.query.get(game_session_id)
 
+    if not user_id:
+        flash("You must select a valid user to add")
+        return redirect(url_for('main.challenges', game_session_id=game_session_id))
+
     if not (game_session.is_managed_by(current_user) or current_user.has_role('Admin')):
         return redirect(url_for('main.challenges', game_session_id=game_session_id))
 
@@ -625,19 +629,20 @@ def remove_manager_from_session():
     return redirect(url_for('main.challenges', game_session_id=game_session_id))
 
 
-@main.route("/udpate_session_end_time", methods=['POST'])
+@main.route("/update_session_end_time", methods=['POST'])
 @login_required
-def udpate_session_end_time():
+def update_session_end_time():
     end_time = request.form['end_time']
     game_session_id = request.form['game_session_id']
     game_session = GameSessions.query.get(game_session_id)
 
-    if game_session.is_managed_by(current_user):
+    if end_time and game_session.is_managed_by(current_user):
         end_time = datetime.strptime(end_time, '%Y-%m-%dT%H:%M')
         game_session.end_time = end_time
 
         db.session.add(game_session)
         db.session.commit()
+        flash("Updated the game time. Use the toggle above to enable the clock", "success")
 
     return redirect(url_for('main.challenges', game_session_id=game_session_id))
 
@@ -660,6 +665,7 @@ def enable_session_time():
 
         db.session.add(game_session)
         db.session.commit()
+        flash(f"Toggled the game timer to: {uses_timer}", "success")
 
     return redirect(url_for('main.challenges', game_session_id=game_session_id))
 

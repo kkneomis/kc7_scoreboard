@@ -18,6 +18,7 @@
 
   <!-- Custom styles for this template-->
   <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css" rel="stylesheet">
 
 
 
@@ -25,6 +26,8 @@
    <!-- Bootstrap core JavaScript-->
   <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script>
+
 
   <!-- Core plugin JavaScript-->
   <script src="{{ url_for('static', filename='js/vendor/jquery.easing.min.js') }}"></script>
@@ -47,10 +50,6 @@
 
   <!-- Countdown timer-->
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/jquery.countdown.css') }}">
-
-
-  
-     
     
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
@@ -62,13 +61,13 @@
   <!-- Page Wrapper -->
   <div id="wrapper">
     <!-- Insert Side Nav here-->
-    {% include "main/sidebar.html" %}
+    {% include "main/partials/sidebar.html" %}
     <!-- Content Wrapper -->
     <div id="content-wrapper" class="d-flex flex-column">
       <!-- Main Content -->
       <div id="content">
        <!-- Insert Top Nav here-->
-        {% include "main/navbar.html" %}
+        {% include "main/partials/navbar.html" %}
         <!-- Begin Page Content -->
         <div class="container">
           {% block body %}{% endblock %}
@@ -76,7 +75,7 @@
         </div>
       <!-- End of Main Content -->
       <!-- Footer here-->
-      {% include "main/footer.html" %}
+      {% include "main/partials/footer.html" %}
     </div>
     <!-- End of Content Wrapper -->
   </div>

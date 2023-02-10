@@ -51,6 +51,26 @@ def logout():
     logout_user()
     return redirect(url_for('main.home'))
 
+@auth.route('/edit_profile', methods=['GET', 'POST'])
+def edit_profile():
+    if request.method == 'GET':
+        return render_template('auth/edit_user.html' )
+
+    #else method is POST, so handle the form
+    username =  request.form['username']
+    email =  request.form['email']
+    current_user.username = username
+    current_user.email = email
+
+    try:
+        db.session.add(current_user)
+        db.session.commit()
+        flash("User details were updated", "success")
+    except:
+        flash("Hmm we can't seem to update your user details. Try again", "error")
+
+    return redirect(url_for('auth.edit_profile'))
+
 
 @auth.route('/register', methods=['GET', 'POST'])
 def register(username:str=None, password:str=None, email:str=None, team_id:int=None, via_gui=True):
@@ -125,6 +145,7 @@ def create_users_from_file():
     return redirect(url_for('main.manage_users'))
 
 
+
 @auth.route('/reset', methods=["GET", "POST"])
 def reset():
     if request.method == 'GET':
@@ -184,6 +205,24 @@ def reset_with_token(token):
         return redirect(url_for('auth.login'))
 
     return render_template('auth/reset_with_token.html', form=form, token=token)
+
+
+@auth.route('/reset_password', methods=["POST"])
+def reset_password():
+    current_password = request.form["current_password"]
+    new_password = request.form["new_password"]
+
+    if current_user.check_password(current_password):
+        current_user.set_password(new_password)
+        db.session.add(current_user)
+        db.session.commit()
+        flash("You password has been updated", "success")
+    else:
+        flash("You did not provide the correct password, try again.", "error")
+
+    return redirect(url_for('auth.edit_profile'))
+
+
 
 # project/email.py  
 def send_email(to, subject, template): 

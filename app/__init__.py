@@ -62,7 +62,12 @@ db.create_all()
 # HTTP error handling
 @app.errorhandler(404)
 def not_found(error):
-    return render_template('auth/404.html'), 404
+    return render_template('misc/404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return render_template('misc/500.html'), 500
+
 
 
 @login_manager.user_loader
