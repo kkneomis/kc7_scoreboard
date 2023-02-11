@@ -27,10 +27,13 @@ app = application
 # Import Configurations from config.py
 # Depends on the environment (e.g. production, dev, testing...)
 #export APPLICATION_SETTINGS='config.DevelopmentConfig' to set config
-#app.config.from_object(os.environ['APPLICATION_SETTINGS'])
-# app.config.from_object('config.ProductionConfig')
-app.config.from_object('config.DevelopmentConfig')
-#app_settings = "app.server.config.DevelopmentConfig"
+try:
+    # app.config.from_object('config.ProductionConfig')
+    app.config.from_object(os.environ['APPLICATION_SETTINGS'])
+except:
+    # did not find APPLICATION_SETTINGS. Use development config
+    print("did not find APPLICATION_SETTINGS. Using development config")
+    app.config.from_object('config.DevelopmentConfig')
 
 # Define the database object which is imported
 # by modules and views
@@ -134,7 +137,7 @@ def before_first_request():
     current_session = db.session.query(GameSessions).get(1)
     if not GameSessions.query.all():
         try:
-            current_session = GameSessions(state=True, start_time=datetime.now())
+            current_session = GameSessions(start_time=datetime.now())
             db.session.add(current_session)
             db.session.commit()
             print("Created a new game session!")

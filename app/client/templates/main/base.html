@@ -20,14 +20,10 @@
   <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/css/bootstrap4-toggle.min.css" rel="stylesheet">
 
-
-
-
    <!-- Bootstrap core JavaScript-->
   <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
   <script src="https://cdn.jsdelivr.net/gh/gitbrent/bootstrap4-toggle@3.6.1/js/bootstrap4-toggle.min.js"></script>
-
 
   <!-- Core plugin JavaScript-->
   <script src="{{ url_for('static', filename='js/vendor/jquery.easing.min.js') }}"></script>
@@ -42,11 +38,9 @@
   <!-- Js for countdown-->
   <script src="{{ url_for('static', filename='js/jquery.countdown.min.js') }}"></script>
 
-
   <!-- Datatables-->
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/datatables.min.css') }}"/>
   <link href="https://cdn.datatables.net/buttons/2.3.4/css/buttons.dataTables.min.css" rel="stylesheet">
-
 
   <!-- Countdown timer-->
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/jquery.countdown.css') }}">
@@ -60,21 +54,25 @@
 
   <!-- Page Wrapper -->
   <div id="wrapper">
-    <!-- Insert Side Nav here-->
-    {% include "main/partials/sidebar.html" %}
-    <!-- Content Wrapper -->
-    <div id="content-wrapper" class="d-flex flex-column">
-      <!-- Main Content -->
-      <div id="content">
-       <!-- Insert Top Nav here-->
-        {% include "main/partials/navbar.html" %}
-        <!-- Begin Page Content -->
-        <div class="container">
-          {% block body %}{% endblock %}
-          <!-- Insert Page Content here-->
-        </div>
-      <!-- End of Main Content -->
-      <!-- Footer here-->
+      <!-- Insert Side Nav here-->
+      {% include "main/partials/sidebar.html" %}
+      <!-- Content Wrapper -->
+      <div id="content-wrapper" class="d-flex flex-column">
+        <!-- Main Content -->
+        <div id="content">
+        <!-- Insert Top Nav here-->
+          {% include "main/partials/navbar.html" %}
+          <!-- Begin Page Content -->
+          <div class="container">
+            {% block body %}{% endblock %}
+            <!-- Insert Page Content here-->
+          </div>
+        <!-- End of Main Content -->
+        <!-- Footer here-->
+        
+        <!-- End of Footer -->
+      </div>
+      <!-- End of Content  -->
       {% include "main/partials/footer.html" %}
     </div>
     <!-- End of Content Wrapper -->
@@ -90,29 +88,29 @@
     // Display an info toast with no title
     var toastr;
     toastr.options = {
-    "closeButton": true,
-    "newestOnTop": false,
-    "progressBar": true,
-    "positionClass": "toast-top-right",
-    "preventDuplicates": false,
-    "onclick": null,
-    "showDuration": "10000",
-    "hideDuration": "1000",
-    "timeOut": "10000",
-    "extendedTimeOut": "1000",
-    "showEasing": "swing",
-    "hideEasing": "linear",
-    "showMethod": "fadeIn",
-    "hideMethod": "fadeOut"
-  }
-  {% for category, message in get_flashed_messages(with_categories=true) %}
-      {% if category in ["success", "error"] %}
-          toastr['{{ category }}']('{{ message }}');
-      {% else %}
-          toastr['info']('{{ message }}');
-      {% endif %}
-  {% endfor %}
-</script>
+      "closeButton": true,
+      "newestOnTop": false,
+      "progressBar": true,
+      "positionClass": "toast-top-right",
+      "preventDuplicates": false,
+      "onclick": null,
+      "showDuration": "10000",
+      "hideDuration": "1000",
+      "timeOut": "10000",
+      "extendedTimeOut": "1000",
+      "showEasing": "swing",
+      "hideEasing": "linear",
+      "showMethod": "fadeIn",
+      "hideMethod": "fadeOut"
+    }
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+        {% if category in ["success", "error"] %}
+            toastr['{{ category }}']('{{ message }}');
+        {% else %}
+            toastr['info']('{{ message }}');
+        {% endif %}
+    {% endfor %}
+  </script>
 
   <!-- Custom scripts for all pages-->
   <script src="{{ url_for('static', filename='js/sb-admin-2.min.js') }}"></script>

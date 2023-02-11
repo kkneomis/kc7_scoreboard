@@ -184,6 +184,12 @@ class Users(AuthBase, RoleMixin):
         for i, user in enumerate(standings):
             if user.user_id == self.id:
                 n = i + 1
+
+                # if score is same as last person's score
+                # make the standing the same
+                if (i != 0) and (user.score == standings[i-1].score):
+                    n = n-1
+
                 if numeric:
                     return n
                 ranking =  ordinalize(n)
@@ -325,6 +331,10 @@ class GameSessions(Base):
     def registrants(self) -> "list[int]":
         return list(set([registration.user_id for registration in self.get_registrations()]))
 
+    @property
+    def challenges(self) -> "list[int]":
+        return list(set([registration.challenge_id for registration in self.get_registrations()]))
+
 
     @property
     def solver_names(self) -> "list[str]":
@@ -421,23 +431,3 @@ class Solves(Base):
         self.username = username
 
 
-
-
-
-# # Define the UserRoles association table
-# class UserRoles(AuthBase):
-#     __tablename__ = 'user_roles'
-#     id = db.Column(db.Integer(), primary_key=True)
-#     user_id = db.Column(db.Integer(), db.ForeignKey('users.user_id', ondelete='CASCADE'))
-#     role_id = db.Column(db.Integer(), db.ForeignKey('roles.id', ondelete='CASCADE'))
-
-
-
-# class Solves():
-#     id = db.Column(
-#         None, db.ForeignKey("solves.id", ondelete="CASCADE"), primary_key=True
-#     )
-#     user_id = column_property(
-#         db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE")),
-#         Submissions.user_id,
-#     )

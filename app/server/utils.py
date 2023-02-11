@@ -2,6 +2,7 @@
 from app.server.models import db
 from app.server.models import GameSessions, Solves, Challenges, Users
 from app import cache
+import requests
 
 # Import external modules
 from fileinput import filename
@@ -77,3 +78,14 @@ def get_user_standings(game_session_id):
 def generate_password(length=8):
     chars = string.ascii_letters + string.digits 
     return ''.join(random.choice(chars) for _ in range(length))
+
+
+ # Get files to load from json
+def load_json_from_github(path):
+    url = f"https://raw.githubusercontent.com/kkneomis/kc7_data/d6b756b367b03910db0ce3a0d8e9ef5b8c35b458/Questions/{path}"
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        return response.json()
+    else:
+        raise Exception(f"Failed to load JSON from GitHub ({response.status_code})")

@@ -27,58 +27,140 @@
   {% 
     if current_user.has_role('Admin') or game_session.is_managed_by(current_user)
   %}
-  <!-- DataTales Example -->
-  <div class="card shadow mb-4">
-    <div class="card-header py-3">
-      <h6 class="m-0 font-weight-bold text-primary">Add a new challenge</h6>
-    </div>
-    <div class="card-body">
-      <form method="POST" action="/addchallenge">
-        <div class="form-group">
-          <label for="challengeName">Challenge Name</label>
-          <input type="text" class="form-control" id="challengeName" placeholder="Name" name="challenge_name">
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Add a new challenge set from github (recommended)</h6>
         </div>
-        <div class="form-group">
-          <label for="challengeValue">Value (points)</label>
-          <input type="number" class="form-control" id="challengeValue" value="10" name="value">
+        <div class="card-body">
+          <form method="POST"  enctype="multipart/form-data" action="{{ url_for('main.create_challenges_from_github') }}" >
+            <div class="form-group">
+              <label for="formUpload" class="form-label">Click to select a set of questions to load</label>
+                <select class="custom-select" id="loadJson" name="json_path">
+                  <option  value="" selected>Choose...</option>
+                  {% for question in questions %}
+                    <option value="{{question['path']}}">{{question["name"]}}</option>
+                  {% endfor %}
+                </select>
+                <input  type="hidden" name="game_session_id" value="{{game_session.id}}">
+            </div>
+            <div class="form-group">
+              <input type="submit" class="btn btn-primary btn-block" value="Submit">
+          </div>
+          </form>
         </div>
-        <div class="form-group">
-          <label for="challengeDesc">Question/Description</label>
-          <input type="textarea" class="form-control" id="challengeDesc"
-            placeholder="How many employees are in the company?" name="description">
-        </div>
-        <div class="form-group">
-          <label for="challengeAnswer">Answer</label>
-          <input type="text" class="form-control" id="challengeAnswer" placeholder="Answer" name="answer" rows="3">
-        </div>
-        <div class="form-group">
-          <label for="category">Category</label>
-          <input type="text" class="form-control" id="category" placeholder="Category" name="category" rows="3">
-        </div>
-        <input type="submit" class="btn btn-primary btn-block" value="Submit">
-        <input type="hidden" name="game_session_id" value="{{game_session.id}}">
-      </form>
-    </div>
-  </div>
-  <div class="card shadow mb-4">
-    <div class="card-header py-3">
-      <h6 class="m-0 font-weight-bold text-primary">Add a new challenge (via csv)</h6>
-    </div>
-    <div class="card-body">
-      <form method="POST"  enctype="multipart/form-data" action="{{ url_for('main.create_challenges_from_file') }}" id="fileuploadform">
-        <div class="form-group">
-          <label for="formUpload" class="form-label">Click to upload file (Must be csv with columns: Name, Value, Description, Answer)</label>
-            <input class="form-control" type="file" name="file" required>
-            <input  type="hidden" name="game_session_id" value="{{game_session.id}}">
-        </div>
-        <div class="form-group">
-          <input type="submit" class="btn btn-primary btn-block" value="Submit">
       </div>
-      </form>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+          <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Add a new challenge (via csv)</h6>
+          </div>
+          <div class="card-body">
+            <form method="POST"  enctype="multipart/form-data" action="{{ url_for('main.create_challenges_from_file') }}" id="fileuploadform">
+              <div class="form-group">
+                <label for="formUpload" class="form-label">Click to upload file (Must be csv with columns: Name, Value, Description, Answer)</label>
+                  <input class="form-control" type="file" name="file" required>
+                  <input  type="hidden" name="game_session_id" value="{{game_session.id}}">
+              </div>
+              <div class="form-group">
+                <input type="submit" class="btn btn-primary btn-block" value="Submit">
+            </div>
+            </form>
+      
+          </div>
+        </div>
+      </div>
+  </div> <!-- end row -->
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Add a new challenge (manual)</h6>
+        </div>
+        <div class="card-body">
+          <form method="POST" action="/addchallenge">
+            <div class="form-group">
+              <label for="challengeName">Challenge Name</label>
+              <input type="text" class="form-control" id="challengeName" placeholder="Name" name="challenge_name">
+            </div>
+            <div class="form-group">
+              <label for="challengeValue">Value (points)</label>
+              <input type="number" class="form-control" id="challengeValue" value="10" name="value">
+            </div>
+            <div class="form-group">
+              <label for="challengeDesc">Question/Description</label>
+              <input type="textarea" class="form-control" id="challengeDesc"
+                placeholder="How many employees are in the company?" name="description">
+            </div>
+            <div class="form-group">
+              <label for="challengeAnswer">Answer</label>
+              <input type="text" class="form-control" id="challengeAnswer" placeholder="Answer" name="answer" rows="3">
+            </div>
+            <div class="form-group">
+              <label for="category">Category</label>
+              <input type="text" class="form-control" id="category" placeholder="Category" name="category" rows="3">
+            </div>
+            <input type="submit" class="btn btn-primary btn-block" value="Submit">
+            <input type="hidden" name="game_session_id" value="{{game_session.id}}">
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Clear all challenges</h6>
+        </div>
+        <div class="card-body">
+          <form action="/clear_all_challenges" method="POST">
+            <input type="hidden" name="game_session_id" value="{{ game_session.id }}">
+            <input type="submit" class="btn btn-danger btn-block btn-sm"  value="Clear all challenges"
+            onclick="return confirm('Are you sure you want to delete all the existing challenges? You cannot undo this action!')">
+          </form>
+        </div>
+      </div><!---end of  card-->
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Add time to session</h6>
+        </div>
+        <div class="card-body">
+          <form action="{{ url_for('main.enable_session_time') }}" method="POST">
+            <div class="form-group">
+              <label for="time">Toggle the game timer</label><br>
+              <div class="form-check form-switch">
+                <input onChange="this.form.submit()" data-toggle="toggle" data-onstyle="primary" class="form-check-input" 
+                type="checkbox"  name="uses_timer" 
+                        id="flexSwitchCheckDefault"  
+                        {%- if game_session.uses_timer -%}
+                          checked
+                        {%- endif -%} >
+                <!-- <label class="form-check-label" for="flexSwitchCheckDefault">Time the game session?</label> -->
+                <input type="hidden" name="game_session_id" value="{{game_session.id}}">
+              </div>
+            </div> 
+          </form>
+          <form action="{{ url_for('main.update_session_end_time') }}" method="POST">
+            <div class="form-group">
+              <label for="time">Update the session end time:</label><br>
+              <div class="input-group">
+                <input type="datetime-local" name="end_time" value="{{game_session.end_time}}">
+                <div class="input-group-append">
+                  <button class="btn btn-success" type="submit">Update End Time</button>
+                </div>
+              </div>  
+              <input type="hidden" name="game_session_id" value="{{game_session.id}}">
+            </div>
+          </form>
+        </div>
+      </div><!---end of  card-->
 
     </div>
   </div>
-
+ 
 
   {% endif %}
 
@@ -100,7 +182,7 @@
         {% for category, challenge_items in challenges|groupby('category') %}
         <div class="tab-pane">
             <div class="row">
-            {% for challenge in challenge_items|sort(reverse=false, attribute='name') %}
+            {% for challenge in challenge_items|sort(reverse=false, attribute='id') %}
                 <div class="col-xl-3 col-md-6 mb-4">
                     <div class="card text-white 
                           {% if current_user.id in challenge.solvers %}
@@ -119,7 +201,7 @@
                                         text-white
                                       {% endif%}
                                     text-uppercase mb-1">
-                                      {{challenge.name}}</div>
+                                      {{challenge.name}}  </div>
                                     <div class="h5 mb-0 font-weight-bold text-gray-800">
                                       <a href="#" class="stretched-link text-decoration-none
                                         {% if current_user.id in challenge.solvers %}

@@ -1,20 +1,7 @@
 {% if current_user.has_role('Admin') or game_session.is_managed_by(current_user) %}
 <!-- Page Heading -->
 <section class="jumbotron text-left">
-  <div class="container">
-    <div class="row">
-        Session Managers:&nbsp;
-        {% for user in game_session.managers %}
-              <form action="/removemanager" method="post">
-                <input type="hidden" name="user_id" value="{{ user.id }}">
-                <input type="hidden" value="{{game_session.id}}" name="game_session_id" >
-                <input type="submit" class="btn btn-danger btn-block btn-sm"  value="{{user.username}} x"
-                onclick="return confirm('Would you like to remove this manager?')">
-              </form>&nbsp;
-        {% endfor %}
-        <hr/>
-    </div>
-    <br>
+
     <div class="row">
       <!-- <h3>Manage the game session</h3> -->
       <div class="col-md-6 ">
@@ -32,32 +19,16 @@
           </form>
       </div>
       <div class="col-md-6 ">
-        <form action="{{ url_for('main.enable_session_time') }}" method="POST">
-          <div class="form-group">
-            <div class="form-check form-switch">
-              <input onChange="this.form.submit()" data-toggle="toggle" data-onstyle="primary" class="form-check-input" 
-              type="checkbox"  name="uses_timer" data-on="Timer Active" data-off="Timer Not Active"
-                      id="flexSwitchCheckDefault"  
-                      {%- if game_session.uses_timer -%}
-                        checked
-                      {%- endif -%} >
-              <!-- <label class="form-check-label" for="flexSwitchCheckDefault">Time the game session?</label> -->
-              <input type="hidden" name="game_session_id" value="{{game_session.id}}">
-            </div>
-          </div> 
-        </form>
-        <form action="{{ url_for('main.update_session_end_time') }}" method="POST">
-          <div class="form-group">
-            <label for="time">Update the session end time:</label><br>
-            <div class="input-group">
-              <input type="datetime-local" name="end_time" value="{{game_session.end_time}}">
-              <div class="input-group-append">
-                <button class="btn btn-success" type="submit">Update End Time</button>
-              </div>
-            </div>  
-            <input type="hidden" name="game_session_id" value="{{game_session.id}}">
-          </div>
-        </form>
+
+        Session Managers (click to remove):&nbsp;
+        {% for user in game_session.managers %}
+              <form action="/removemanager" method="post">
+                <input type="hidden" name="user_id" value="{{ user.id }}">
+                <input type="hidden" value="{{game_session.id}}" name="game_session_id" >
+                <input type="submit" class="btn btn-danger btn-sm"  value="{{user.username}} x"
+                onclick="return confirm('Would you like to remove this manager?')">
+              </form>&nbsp;
+        {% endfor %}
 
         <form action="{{ url_for('main.add_session_manager') }}" method="POST">
           <div class="form-group">

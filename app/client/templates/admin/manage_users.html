@@ -51,6 +51,7 @@
                 <th>#</th>
                 <th>User Name</th>
                 <th>User Email</th>
+                <th>Is Admin?</th>
                 <th>Delete</th>
               </tr>
             </thead>
@@ -59,6 +60,20 @@
                 <td>{{ user.id }}</td>
                 <td>{{ user.username}}</td>
                 <td>{{ user.email}}</td>
+                <td>
+                  <form action="/toggle_admin" method="post">
+                    <div class="form-check form-switch">
+                      <input onChange="this.form.submit()" data-toggle="toggle" data-onstyle="primary" class="form-check-input" 
+                      type="checkbox"  name="is_admin" data-on="Admin" data-off="Not Admin"
+                              id="flexSwitchCheckDefault"  
+                              {%- if user.has_role('Admin') -%}
+                                checked
+                              {%- endif -%} >
+                      <!-- <label class="form-check-label" for="flexSwitchCheckDefault">Time the game session?</label> -->
+                      <input type="hidden" name="user_id" value="{{ user.id }}">
+                    </div>
+                  </form>
+                </td>
                 <td>
                   <form action="/deluser" method="post">
                     <input type="hidden" name="user_id" value="{{ user.id }}">

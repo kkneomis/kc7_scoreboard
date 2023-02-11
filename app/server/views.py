@@ -78,6 +78,36 @@ def manage_sessions():
                            get_user=get_user)
 
 
+@main.route("/toggle_admin", methods=['POST'])
+@roles_required('Admin')
+@login_required
+def toggle_admin():
+    user_id = request.form['user_id']
+    is_admin = request.form.get('is_admin', 'off')
+    user = Users.query.get(user_id)
+    admin_role = Roles.query.filter_by(name='Admin').first()
+
+    if user.id != current_user.id:
+        if is_admin == 'on':
+            user.roles.append(admin_role)
+        else:
+            try:
+                user.roles.remove(admin_role)
+            except Exception as e:
+                flash("This user is not an admin")
+
+        db.session.add(user)
+        db.session.commit()
+    else:
+        flash("You cannot remove the admin role from yourself")
+
+    return redirect(url_for('main.manage_users'))
+
+
+
+
+
+
 @main.route("/joinsession", methods=['GET', 'POST'])
 @login_required
 def join_session():
@@ -131,81 +161,6 @@ def dashboard():
     return render_template("main/dashboard.html", sessions=sessions)
 
 
-@main.route("/mitigations")
-@login_required
-def mitigations():
-    """
-    Users can view and apply mitigations from this page
-    Mitigations are submitted as a list to updateDenyList endpoint
-    """
-    return render_template("main/mitigations.html")
-
-
-@main.route("/getDenyList", methods=['GET'])
-@login_required
-def get_deny_list():
-    """
-    Query database for team mitigations
-    Return mitigations in list format
-    """
-    return jsonify(current_user.team._mitigations)
-
-
-@main.route("/updateDenyList", methods=['POST'])
-@login_required
-def update_deny_list():
-    """
-    POST request from mitigations page on click
-    Take a list of indicators from the view
-    Update the user's _mitigations attribute to reflect
-    Mitigations are stored as a strigified list
-    Must be json loaded after being retrieved
-    """
-    try:
-        deny_list = request.form['dlist']
-        mitigations = deny_list.split("\n")
-        mitigations = [x for x in mitigations if x]
-        current_user.team._mitigations = json.dumps(mitigations)
-
-        # update the teams score
-        # check if any new indicators are tagged as malicious
-        # # award point for malicious indicators found
-        # for indicator in mitigations:
-        #     current_user.team.score += 100
-
-        print(current_user.team.score)
-
-        db.session.commit()
-        return jsonify(success=current_user.team._mitigations)
-    except Exception as e:
-        print(e)
-        return jsonify(success=False)
-
-
-@main.route("/updatePermissions", methods=['POST'])
-@roles_required('Admin')
-@login_required
-def update_permissions():
-    """
-    POST request from mitigations page on click
-    Take a list of indicators from the view
-    Update the user's _mitigations attribute to reflect
-    Mitigations are stored as a strigified list
-    Must be json loaded after being retrieved
-    """
-    try:
-        permissions_list = request.form['plist']
-        log_uploader = LogUploader()
-        user_strings = [x for x in permissions_list.split("\n") if x]
-        for user_string in user_strings:
-                log_uploader.add_user_permissions(user_string)
-        return jsonify(success=True)
-    except Exception as e:
-        print(e)
-        flash("Error updating ADX Permissions: ","error")
-        return jsonify(success=False)
-
-
 @login_required
 @main.route('/deluser', methods=['GET', 'POST'])
 def deluser():
@@ -256,8 +211,6 @@ def challenges(game_session_id=None, category=None):
         print(f"got no results when trying to get categories {e}")
         categories = []
 
-    print(categories)
-
     categories = list(set([c.category for c in categories]))
     categories.sort()
 
@@ -296,12 +249,17 @@ def challenges(game_session_id=None, category=None):
         .filter(~Users.id.in_([m.id for m in game_session.managers]))
     ).all()
 
+    questions = load_json_from_github("questions2.json")
+
+    
+
     return render_template("main/challenges.html", 
                             challenges=challenges, 
                             categories=categories,
                             current_category = category,
                             game_session = game_session,
-                            users=users)
+                            users=users,
+                            questions=questions)
 
 
 @main.route("/rankings/<int:game_session_id>")
@@ -348,9 +306,29 @@ def create_challenge():
     return redirect(url_for('main.challenges', game_session_id=game_session_id))
 
 
+@main.route('/clear_all_challenges', methods=['POST'])
+@login_required
+def clear_all_challenges():
+    
+    game_session_id = request.form['game_session_id'] 
+
+    #get game session object
+    game_session = db.session.query(GameSessions).get(game_session_id)
+    
+    if game_session.is_managed_by(current_user):  
+        print("printing challenges")
+        for challenge in game_session.challenges:
+            db.session.delete(challenge)
+        db.session.commit()
+    else:
+        flash("You aren't authorized to do this", "error")
+
+    flash("Cleared all challenges", "success")
+    return redirect(url_for('main.challenges', game_session_id=game_session_id))
+
+
 @main.route('/addchallengebulk', methods=['POST'])
 @login_required
-@roles_required('Admin')
 def create_challenges_from_file():
     """Take a CSV and use it to  questions"""
     print("received a file")
@@ -371,7 +349,6 @@ def create_challenges_from_file():
             for row in reader:
                 # if isinstance(row, list):
                 #     row = row[0].split(",")
-                print(row[0])
                 if row[0].lower() in ["name", "Name"]:
                     # this is the header
                     continue
@@ -398,10 +375,51 @@ def create_challenges_from_file():
                     
     else:
         flash("Not a valid file format. Only CSV files are allowed.", "error")
-    
     flash(f"Added new challenges from csv", "success")
+    return redirect(url_for('main.challenges', game_session_id=game_session_id))
+
+
+@main.route('/create_challenges_from_github', methods=['POST'])
+@login_required
+def create_challenges_from_github():
+    path = request.form['json_path']
+    game_session_id= request.form["game_session_id"]
+    game_session = GameSessions.query.get(game_session_id)
+    questions = load_json_from_github(path)
+    print(questions)
+
+    count_of_questions_added = 0
+    for question in questions:
+        try:
+            name = question["Name"]
+            description = question["Description"]
+            answer = question["Answer"]
+            value = question["Value"]
+            category = question["Category"]
+            
+            
+            challenge = Challenges(
+                name=name, 
+                description=description, 
+                answer=answer, 
+                value=value, 
+                category=category,
+                game_session=game_session
+            )
+            db.session.add(challenge)
+            db.session.commit()
+            count_of_questions_added +=1
+        except Exception as e:
+            flash("Failed to add questions", "error")
+            print(f"unable to add row due to error: {e}")
+            db.session.rollback()
+    
+    flash(f"Added {count_of_questions_added} new questions from github", "info")
 
     return redirect(url_for('main.challenges', game_session_id=game_session_id))
+
+
+
 
 
 @main.route('/editchallenge', methods=['POST', 'GET'])
@@ -618,9 +636,7 @@ def remove_manager_from_session():
     # yes, this code is bad and I should feel bad
     # TODO: make more elegant
     for index, user in enumerate(game_session.managers):
-        print(f"{user_id}=={user.id}")
         if user.id == int(user_id):
-            print("removing the user")
             game_session.managers.pop(index)
 
     db.session.add(game_session)
@@ -650,7 +666,6 @@ def update_session_end_time():
 @main.route("/enable_session_time", methods=['POST'])
 @login_required
 def enable_session_time():
-    print(request.form)
     uses_timer = request.form.get('uses_timer', 'off')
     game_session_id = request.form['game_session_id']
     game_session = GameSessions.query.get(game_session_id)
@@ -684,7 +699,6 @@ def event_setup():
 
     if request.method == 'POST':
         request_data = request.get_json()
-        print(request.data)
 
     # Might need to do some scrubbing on this (the event name)
     # Or allow users to edit this after they login later
