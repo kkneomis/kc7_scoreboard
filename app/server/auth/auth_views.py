@@ -176,9 +176,8 @@ def reset():
         recover_url=recover_url)
 
     # send_email is defined in myapp/util.py
-    send_email(subject, user.email, html)
-
-    flash('Check your email for a password reset link', "success")
+    send_email(subject=subject, recipient=user.email, template=html)
+    flash('Check your email for a password reset link. Email might be in your SPAM folder.', "success")
 
     return redirect(url_for('auth.login'))
 
@@ -225,9 +224,17 @@ def reset_password():
 
 
 # project/email.py  
-def send_email(to, subject, template): 
-    print("sending email")
-    # msg = Message( subject, recipients=[to], html=template, sender=current_app.config['MAIL_USERNAME'] ) 
-    msg = Message( subject, recipients=['skakpovi@gmail.com'], html=template, sender=current_app.config['MAIL_USERNAME'] ) 
+def send_email(subject, recipient, template): 
+    print("sending mail...")
+    msg = Message( 
+            subject, 
+            recipients=[recipient], 
+            html=template, 
+            sender='kc7cyber@gmail.com'
+        ) 
+
     mail.send(msg)
-    print("password reset email sent")
+    print("mail sent... theoretically...")
+    # print(help(mail))
+
+    

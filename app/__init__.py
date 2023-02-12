@@ -30,10 +30,11 @@ app = application
 try:
     # app.config.from_object('config.ProductionConfig')
     app.config.from_object(os.environ['APPLICATION_SETTINGS'])
-except:
+except Exception as e:
     # did not find APPLICATION_SETTINGS. Use development config
-    print("did not find APPLICATION_SETTINGS. Using development config")
+    print(f"did not find APPLICATION_SETTINGS. Using development config: {e}")
     app.config.from_object('config.DevelopmentConfig')
+
 
 # Define the database object which is imported
 # by modules and views
