@@ -64,7 +64,7 @@ class ProductionConfig(BaseConfig):
             dbname=os.environ['DBNAME']
         )
 
-        MAIL_SERVER = 'smtp.gmail.com'
+        MAIL_SERVER = os.environ['MAIL_SERVER']
         MAIL_PORT = 465
         MAIL_USE_SSL = True
         MAIL_USERNAME = os.environ['MAIL_USERNAME']
