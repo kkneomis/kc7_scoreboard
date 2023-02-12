@@ -35,7 +35,7 @@ class BaseConfig(object):
     SECRET_KEY = 'y?,???\???Z#?*t^_mzal(t@o01v3fee27g%rg18fc5d@'
 
 
-    MAIL_USERNAME = "example@gmail.com"
+
     
 
 class DevelopmentConfig(BaseConfig):
@@ -46,7 +46,6 @@ class DevelopmentConfig(BaseConfig):
 
     SQLALCHEMY_DATABASE_URI = 'sqlite:///flaskr.db'
 
-
 class TestingConfig(BaseConfig):
     DEBUG = False
     TESTING = True
@@ -56,12 +55,19 @@ class TestingConfig(BaseConfig):
 class ProductionConfig(BaseConfig):
     DEBUG = False
 
-    # Set the variables
-    SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://{dbuser}:{dbpass}@{dbhost}:5432/{dbname}'.format(
-        dbuser=os.environ['DBUSER'],
-        dbpass=os.environ['DBPASS'],
-        dbhost=os.environ['DBHOST'] + ".postgres.database.azure.com",
-        dbname=os.environ['DBNAME']
-    )
+    try:
+        # Set the variables
+        SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://{dbuser}:{dbpass}@{dbhost}:5432/{dbname}'.format(
+            dbuser=os.environ['DBUSER'],
+            dbpass=os.environ['DBPASS'],
+            dbhost=os.environ['DBHOST'] + ".postgres.database.azure.com",
+            dbname=os.environ['DBNAME']
+        )
 
-    MAIL_USERNAME= os.environ['MAIL_USERNAME']
+        MAIL_SERVER = 'smtp.gmail.com'
+        MAIL_PORT = 465
+        MAIL_USE_SSL = True
+        MAIL_USERNAME = os.environ['MAIL_USERNAME']
+        MAIL_PASSWORD = os.environ['APP_PASSWORD']
+    except:
+        pass
