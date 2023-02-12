@@ -34,21 +34,8 @@ class BaseConfig(object):
     # Secret key for signing cookie. You should replace this
     SECRET_KEY = 'y?,???\???Z#?*t^_mzal(t@o01v3fee27g%rg18fc5d@'
 
-    ################################
-    # AZURE ENVIRONMENT VARIABLES
-    # FOLLOW THE README TO REPLACE THESE VALUES
-    ################################
 
-    AAD_TENANT_ID = "{YOUR TENANT ID}" #https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-how-to-find-tenant
-    KUSTO_URI = "https://{clustername}.eastus.kusto.windows.net"
-    KUSTO_INGEST_URI =  "https://ingest-{clustername}.eastus.kusto.windows.net"
-    DATABASE = "SecurityLogs"
-
-    # Register an azure application and generate secrets
-    # give the app permission to edit your azure data explorer cluster
-    # App secret can only be seen right after creation
-    CLIENT_ID = "{YOUR REGISTERED APP CLIENT ID}" 
-    CLIENT_SECRET = "{YOUR RESTERED APP CLIENT SECRET}"
+    MAIL_USERNAME = "example@gmail.com"
     
 
 class DevelopmentConfig(BaseConfig):
@@ -68,7 +55,7 @@ class TestingConfig(BaseConfig):
     
 class ProductionConfig(BaseConfig):
     DEBUG = False
-    #SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL_HERE']
+
     # Set the variables
     SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://{dbuser}:{dbpass}@{dbhost}:5432/{dbname}'.format(
         dbuser=os.environ['DBUSER'],
@@ -76,3 +63,5 @@ class ProductionConfig(BaseConfig):
         dbhost=os.environ['DBHOST'] + ".postgres.database.azure.com",
         dbname=os.environ['DBNAME']
     )
+
+    MAIL_USERNAME= os.environ['MAIL_USERNAME']
