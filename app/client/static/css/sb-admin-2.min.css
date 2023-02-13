@@ -8735,22 +8735,22 @@ a:focus{
     }
 }
 .bg-login-image{
-    background:url(https://source.unsplash.com/HakTxidk36I/600x800);
+    background:url('/static/images/hacker-man.png');
     background-position:center;
     background-size:cover
 }
 .bg-join-image{
-    background:url(https://source.unsplash.com/sEvXeIUh1t4/600x800);
+    background:url(/static/images/hacker-cat.png);
     background-position:center;
     background-size:cover
 }
 .bg-register-image{
-    background:url(https://source.unsplash.com/CpPF4W5PB1c/600x800);
+    background:url(/static/images/hacker-bear.png);
     background-position:center;
     background-size:cover
 }
 .bg-password-image{
-    background:url(https://source.unsplash.com/oWTW-jNGl9I/600x800);
+    background:url(/static/images/hacker-bear2.png);
     background-position:center;
     background-size:cover
 }
