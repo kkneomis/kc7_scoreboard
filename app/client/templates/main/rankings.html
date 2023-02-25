@@ -8,9 +8,11 @@
   $(function () {
     var austDay = new Date();
     var endTime = '{{game_session.end_time | safe}}';
-    austDay = new Date(endTime);
-    $('#defaultCountdown').countdown({until: austDay});
-    $('#year').text(austDay.getFullYear());
+    // austDay = new Date(endTime);
+    var targetDate = moment.tz(endTime, "Europe/London");
+    console.log(targetDate.toDate())
+    $('#defaultCountdown').countdown({until: targetDate.toDate()});
+    $('#year').text(targetDate.getFullYear());
   });
 </script>
 
