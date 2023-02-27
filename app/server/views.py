@@ -729,25 +729,30 @@ def event_setup():
         team=default_team
     )
 
-    db.session.add(session_admin)
-    db.session.commit()
+    try:
+        db.session.add(session_admin)
+        db.session.commit()
 
-    # Now create the session
-    session_password = generate_password(length=6)
-    session = GameSessions(
-        uses_timer=False, 
-        name=event_name, 
-        password=session_password
-    )
-    session.managers.append(session_admin)
-    db.session.add(session)
-    db.session.commit()
-
-
-    db.session.add(
-            Registrations(session.id, session_admin.id)
+        # Now create the session
+        session_password = generate_password(length=6)
+        session = GameSessions(
+            uses_timer=False, 
+            name=event_name, 
+            password=session_password
         )
-    db.session.commit()
+        session.managers.append(session_admin)
+        db.session.add(session)
+        db.session.commit()
+
+
+        db.session.add(
+                Registrations(session.id, session_admin.id)
+            )
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(e)
+        return {"error": "Unable to add this user. This email may already have been taken"}
 
 
     #Finally return the relevant info
