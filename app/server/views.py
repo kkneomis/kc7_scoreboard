@@ -249,7 +249,7 @@ def challenges(game_session_id=None, category=None):
         .filter(~Users.id.in_([m.id for m in game_session.managers]))
     ).all()
 
-    questions = load_json_from_github("questions2.json")
+    questions = load_json_from_github("questions.json")
 
     
 
