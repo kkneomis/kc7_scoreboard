@@ -1,6 +1,6 @@
 # Import internal modules
 from app.server.models import db
-from app.server.models import GameSessions, Solves, Challenges, Users
+from app.server.models import GameSessions, Solves, Challenges, Users, Team
 from app import cache
 import requests
 
@@ -71,6 +71,18 @@ def get_user_standings(game_session_id):
         )
 
     standings = standings_query.all()
+    return standings
+
+
+@cache.memoize(timeout=60)
+def get_team_standings(game_session_id):
+    teams = Team.query.filter_by(game_session_id=game_session_id)
+    standings = [
+        (team, team.average_score)
+        for team in teams
+    ].sort()
+
+    print(standings)
 
     return standings
 
@@ -82,7 +94,7 @@ def generate_password(length=8):
 
  # Get files to load from json
 def load_json_from_github(path):
-    url = f"https://raw.githubusercontent.com/kkneomis/kc7_data/d6b756b367b03910db0ce3a0d8e9ef5b8c35b458/Questions/{path}"
+    url = f"https://kc7cyber.com/questions/{path}"
     response = requests.get(url)
     
     if response.status_code == 200:

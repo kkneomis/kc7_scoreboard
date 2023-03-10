@@ -48,6 +48,11 @@
               <th>Place</th>
               <th>Name</th>
               <th>Points</th>
+              <th>Team Name</th>
+              {% if current_user.has_role('Admin') or game_session.is_managed_by(current_user) %}
+                <th>Team Average</th>
+                <th>Team Ranking</th>
+              {% endif %}
             </tr>
           </thead>
           <tbody>
@@ -56,6 +61,11 @@
               <th scope="row">{{ user.get_place(game_session.id) }}</th>
               <td>{{ user.username }}</td>
               <td>{{ user.get_score_by_session(game_session.id) }} </td>
+              <td>{{ user.get_team_by_session_id(game_session.id).name }} </td>
+              {% if current_user.has_role('Admin') or game_session.is_managed_by(current_user) %}
+                <td>{{ user.get_team_by_session_id(game_session.id).average_score }} </td>
+                <td>{{ user.get_team_by_session_id(game_session.id).ranking }} </td>
+              {% endif %}
             </tr>
             {% endfor %}
           </tbody>
@@ -63,6 +73,7 @@
       </div>
     </div>
   </div>
+  
 
 
 </div>

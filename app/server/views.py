@@ -47,9 +47,7 @@ def manage_database():
 @roles_required('Admin')
 @login_required
 def manage_teams():
-    team_list = Team.query.all()
-    return render_template("admin/manage_teams.html",
-                           teams=team_list)
+    return render_template("admin/manage_teams.html",)
 
 
 @main.route("/admin/users")
@@ -57,10 +55,8 @@ def manage_teams():
 @login_required
 def manage_users():
     user_list = Users.query.all()
-    teams = Team.query.all()
     return render_template("admin/manage_users.html",
-                           users=user_list,
-                           teams=teams)
+                           users=user_list)
 
 @main.route("/admin/sessions")
 @roles_required('Admin')
@@ -272,6 +268,113 @@ def rankings(game_session_id=None):
     users = Users.query.filter(Users.username!="admin").filter(Users.id.in_(user_ids)).all()
 
     return render_template("main/rankings.html", users=users, game_session=game_session)
+
+
+@main.route("/teams/<int:game_session_id>")
+def mamange_session_teams(game_session_id=None):
+    game_session = GameSessions.query.get(game_session_id) or abort(404)
+    if current_user.id not in game_session.registrants:
+        abort(404)
+
+    teams = game_session.teams
+
+    return render_template("main/session_teams.html", game_session=game_session, teams=teams)
+
+
+@main.route("/jointeam", methods=['POST'])
+def join_team():
+    game_session_id = request.form['game_session_id']
+    game_session = GameSessions.query.get(game_session_id) or abort(404)
+
+    # find the team to join
+    team_id = request.form['team_id']
+    team_to_join = Team.query.get(team_id)
+    
+    if current_user.id in team_to_join.member_ids:
+        flash("You are already on this team, silly")
+        return redirect(url_for('main.mamange_session_teams', game_session_id=game_session.id))
+
+    #check to see if the user has created a team. 
+    # they arent allowed to join a new team if they already own one
+    for team in game_session.teams:
+        if team.owner_id == current_user.id:
+            flash("Looks like you already lead a team. Delete that one before joining a new one", "error")
+            db.session.commit()
+            return redirect(url_for('main.mamange_session_teams', game_session_id=game_session.id))
+
+    # remove from any existing teams on this session
+    # before we add them to a new team
+    current_user.teams = []
+    team_to_join.members.append(current_user)
+
+    # commit changes to db
+    db.session.add(current_user)
+    db.session.commit()
+
+    return redirect(url_for('main.mamange_session_teams', game_session_id=game_session.id))
+    
+
+@main.route("/createteam", methods=['POST'])
+def create_team():
+    game_session_id = request.form['game_session_id']
+    game_session = GameSessions.query.get(game_session_id) or abort(404)
+
+    # check to see if user has already created any teams this session
+    # we really should be doing this at the database level
+    for team in game_session.teams:
+        if team.owner_id == current_user.id:
+            flash("Looks like you already have a team. You can't create a new one")
+            return redirect(url_for('main.mamange_session_teams', game_session_id=game_session.id))
+
+    # if user hasn't already create a team on this session
+    # allow them to create one
+    team_name = request.form['team_name']
+    try:
+        new_team = Team(
+            name=team_name,
+            game_session_id=game_session.id,
+            owner_id=current_user.id
+        )
+        db.session.add(new_team)
+        db.session.commit()
+        flash(f"Created your new team {team_name}", "success")
+
+        # go find the team and add the creator to it
+        current_user.teams = []
+        created_team = Team.query.filter_by(owner_id=current_user.id).first()
+        created_team.members.append(current_user)
+        db.session.add(created_team)
+        db.session.commit()
+    except Exception as e:
+        flash("We couldn't create this team", "error")
+        print(f"failed to create team {e}")
+        db.session.rollback()
+
+    
+        
+    return redirect(url_for('main.mamange_session_teams', game_session_id=game_session.id))
+
+
+@login_required
+@main.route('/delteam', methods=['GET', 'POST'])
+def delteam():
+    """
+    Delete a team
+    """
+    game_session_id = request.form['game_session_id']
+    try:
+        team_id = request.form['team_id']
+        team = db.session.query(Team).get(team_id)
+        if team.owner_id == current_user.id or current_user.has_role('Admin'):
+            db.session.delete(team)
+            db.session.commit()
+            flash("Team removed!", 'success')
+        else:
+            flash("You aren't allowed to delete this team")
+    except Exception as e:
+        print("Error: %s" % e)
+        flash("Failed to remove team", 'error')
+    return redirect(url_for('main.mamange_session_teams', game_session_id=game_session_id))
 
 
 
@@ -509,39 +612,6 @@ def solve_challenge():
                         game_session_id=game_session_id,
                         category=category ))
 
-
-@login_required
-@main.route('/delteam', methods=['GET', 'POST'])
-def delteam():
-    """
-    Delete a team
-    """
-    try:
-        team_id = request.form['team_id']
-        team = db.session.query(Team).get(team_id)
-        db.session.delete(team)
-        db.session.commit()
-        flash("Team removed!", 'success')
-    except Exception as e:
-        print("Error: %s" % e)
-        flash("Failed to remove team", 'error')
-    return redirect(url_for('main.manage_teams'))
-
-
-@main.route("/create_team", methods=['POST'])
-@login_required
-@roles_required('Admin')
-def create_team():
-    try:
-        team_name = request.form['team_name']
-        team = Team(name=team_name, score=0)
-        db.session.add(team)
-        db.session.commit()
-    except Exception as e:
-        print('Failed to create team.', e)
-        flash("Could not create this team!", 'error')
-    flash("Added a new team", 'success')
-    return redirect(url_for('main.manage_teams'))
 
 
 @main.route("/create_session", methods=['POST'])

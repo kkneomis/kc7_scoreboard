@@ -1,0 +1,92 @@
+{% extends "main/base.html" %}
+{% block body %}
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+              <h6 class="m-0 font-weight-bold text-primary">Add a new team </h6>
+            </div>
+            <div class="card-body">
+              <form method="POST" action="/createteam">
+                <div class="form-group">
+                  <label for="challengeName">Team Name</label>
+                  <input type="text" class="form-control" id="team_name" placeholder="Name" name="team_name">
+                </div>
+                <input type="submit" class="btn btn-primary btn-block" value="Submit">
+                <input type="hidden" name="game_session_id" value="{{game_session.id}}">
+              </form>
+            </div>
+          </div>
+      </div>
+</div>
+
+
+
+<div class="row">
+    <div class="col-md-12">
+      <!-- Bar Chart -->
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Teams for {{game_session.id}}</h6>
+      </div>
+      <div class="card-body">
+        <table class="table" id="teamsTable">
+          <thead>
+            <tr>
+              <th>Team Name</th>
+              <th>Members</th>
+              <th>Join</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+            {% for team in teams %}
+            <tr>
+              <td>{{ team.name }}</td>
+              <td>
+                {% for member in team.members%}
+                    <span class="badge badge-primary">{{ member.username }}</span>
+                {% endfor %}
+              </td>
+              <td>
+                <form action="/jointeam" method="post">
+                  <input type="hidden" name="team_id" value="{{ team.id }}">
+                  <input type="hidden" name="game_session_id" value="{{game_session.id}}"  >
+                  <input type="submit" class="btn btn-success  btn-sm"  value="Join this team">
+                </form>
+              </td>
+              <td>
+                {% if team.owner_id == current_user.id or current_user.has_role('Admin') %}
+                    <form action="/delteam" method="post">
+                    <input type="hidden" name="team_id" value="{{ team.id }}">
+                    <input type="hidden" name="game_session_id" value="{{game_session.id}}"  >
+                    <input type="submit" class="btn btn-danger  btn-sm"  value="Delete this team" 
+                    onclick="return confirm('Are you sure you want to delete this team?')">
+                    </form>
+                 {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+      </div>
+    </div>
+    <!-- Bar Chart -->
+    </div>
+  </div>
+
+  <script>
+    $(document).ready(function () {
+        var t = $('#teamsTable').DataTable({
+            columnDefs: [
+                {
+                    searchable: false,
+                    orderable: true,
+                    targets: 0,
+                },
+            ],
+            order: [[0, 'desc']],
+            pageLength: 100
+        });
+    });
+    </script>
+{% endblock %}

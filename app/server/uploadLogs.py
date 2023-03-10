@@ -25,39 +25,44 @@ class LogUploader():
 
     def __init__(self, queue_limit=1000):
         # set Azure tenant config variables
-        self.AAD_TENANT_ID = current_app.config["AAD_TENANT_ID"]
-        self.KUSTO_URI = current_app.config["KUSTO_URI"]
-        self.KUSTO_INGEST_URI = current_app.config["KUSTO_INGEST_URI"]
-        self.DATABASE = current_app.config["DATABASE"]
- 
-        # Aauthenticate with AAD application.
-        self.client_id = current_app.config["CLIENT_ID"]
-        self.client_secret = current_app.config["CLIENT_SECRET"]
 
-
-        # authentication for ingestion client
-        kcsb_ingest = KustoConnectionStringBuilder.with_aad_application_key_authentication(self.KUSTO_INGEST_URI,
-                                                                                        self.client_id, self.client_secret, self.AAD_TENANT_ID)
-
-        # authentication for general client
-        kcsb_data = KustoConnectionStringBuilder.with_aad_application_key_authentication(self.KUSTO_URI,
-                                                                                        self.client_id, self.client_secret, self.AAD_TENANT_ID)
+        if not current_app.config["ADX_DEBUG_MODE"]:
+            self.AAD_TENANT_ID = current_app.config["AAD_TENANT_ID"]
+            self.KUSTO_URI = current_app.config["KUSTO_URI"]
+            self.KUSTO_INGEST_URI = current_app.config["KUSTO_INGEST_URI"]
+            self.DATABASE = current_app.config["DATABASE"]
     
-        #TODO handle errors here
-        self.ingest = QueuedIngestClient(kcsb_ingest)
-        self.client = KustoClient(kcsb_data)
+            # Aauthenticate with AAD application.
+            self.client_id = current_app.config["CLIENT_ID"]
+            self.client_secret = current_app.config["CLIENT_SECRET"]
+
+
+            # authentication for ingestion client
+            kcsb_ingest = KustoConnectionStringBuilder.with_aad_application_key_authentication(self.KUSTO_INGEST_URI,
+                                                                                            self.client_id, self.client_secret, self.AAD_TENANT_ID)
+
+            # authentication for general client
+            kcsb_data = KustoConnectionStringBuilder.with_aad_application_key_authentication(self.KUSTO_URI,
+                                                                                            self.client_id, self.client_secret, self.AAD_TENANT_ID)
+        
+            #TODO handle errors here
+            self.ingest = QueuedIngestClient(kcsb_ingest)
+            self.client = KustoClient(kcsb_data)
+        
      
 
-        # The queue will allow us to upload multiple rows at once
-        # This allows the game to runs faster and enable us to make fewer API calls
-        # self.queue will be in the format:
-        # {
-        #   "table_name": [dict, dict, dict],
-        #   "table_name2": [dict, dict, dict]
-        # }
-        self.queue = {}
-        # how many records do we hold until submitting everything to kusto
-        self.queue_limit = queue_limit
+            # The queue will allow us to upload multiple rows at once
+            # This allows the game to runs faster and enable us to make fewer API calls
+            # self.queue will be in the format:
+            # {
+            #   "table_name": [dict, dict, dict],
+            #   "table_name2": [dict, dict, dict]
+            # }
+            self.queue = {}
+            # how many records do we hold until submitting everything to kusto
+            self.queue_limit = queue_limit
+        else:
+            print("Running in DEBUG MODE...NO NEED TO INITIALIZE KUSTO")
 
 
 
@@ -86,6 +91,7 @@ class LogUploader():
 
         return dataframe_from_result_table(response.primary_results[0])['PrincipalDisplayName'].unique().tolist()
 
+
     def add_user_permissions(self, user_string: str) -> None:
         permission_command = LogUploader._create_user_permission_command(user_string, self.DATABASE)
         response = self.client.execute_mgmt(self.DATABASE, permission_command)
@@ -94,7 +100,14 @@ class LogUploader():
             raise response.get_exceptions()
 
    
+    def get_queue_length(self):
+        """
+        Get the number of records stored in the queue
+        this does a sum of lengths for lists under each tablename key
+        """
+        return sum([len(val) for key, val in self.queue.items()])
 
+    def send_request(self, data: dict, table_name: str) -> None:
         """
         Data is ingested as JSON
         convert to a pandas dataframe and upload to KUSTO

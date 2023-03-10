@@ -24,14 +24,6 @@
                             <input type="password" class="form-control form-control-user"
                                     id="password" name="password" placeholder="Password" value="{{ request.form.password }}">
                         </div>
-                        <div class="form-group">
-                            <label for="teamSelect"> Select a Team</label>
-                            <select class="form-control" id="=teamSelect" name="team_id">
-                              {% for team in teams %}
-                                <option value="{{ team.id }}">{{ team.name }}</option>
-                              {% endfor %}
-                            </select>
-                          </div>
                         <button type="submit" class="btn btn-primary btn-user btn-block">
                             Register Account
                         </button>

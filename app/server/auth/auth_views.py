@@ -76,12 +76,11 @@ def edit_profile():
 def register(username:str=None, password:str=None, email:str=None, team_id:int=None, via_gui=True):
     if request.method == 'GET':
         teams = Team.query.filter(Team.name!="admins").all()
-        return render_template('auth/register.html', teams=teams)
+        return render_template('auth/register.html')
 
     username = username or request.form['username']
     password = password or request.form['password']
     email = email or request.form['email']
-    team_id = team_id or request.form['team_id']
 
     username_exists, email_exists = False, False
     try:
@@ -99,8 +98,7 @@ def register(username:str=None, password:str=None, email:str=None, team_id:int=N
             team = Team.query.get(team_id)
             user = Users(username,
                         password,
-                        email,
-                        team=team)
+                        email)
             db.session.add(user)
             db.session.commit()
             flash('User successfully registered', "success")
