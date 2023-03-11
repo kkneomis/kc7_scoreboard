@@ -46,7 +46,7 @@ mail = Mail(app)
 # Import a module / component using its blueprint handler variable (mod_auth)
 from app.server.views import main
 from app.server.auth.auth_views import auth
-from app.server.models import Users, Team, Roles, GameSessions
+from app.server.models import Users, Roles, GameSessions
 
 # Register blueprint(s)
 app.register_blueprint(main)
@@ -82,7 +82,7 @@ def load_user(id):
 @app.before_request
 def before_request():
     """
-    Prepopulate an admin team and user in the database
+    Prepopulate an admin user in the database
     """
     g.user = current_user
     
@@ -91,15 +91,6 @@ def before_request():
 def before_first_request():
     db.create_all()
 
-    #user_datastore.find_or_create_role(name='Admin')
-    if not Team.query.first():
-        print("Creating admins teams")
-        db.session.add(Team(name='admins', score=0))
-        db.session.add(Team(name='default', score=0))
-        db.session.commit()
-    else:
-        pass
- 
 
     if not Roles.query.first():
         admin_role = Roles(name='Admin')
@@ -110,23 +101,19 @@ def before_first_request():
     else:
         admin_role = Roles.query.first()
         
-
-    admin_team = db.session.query(Team).get(1)
     if not Users.query.first():
         # if no users are found in the database
         # see an initial "Admin" user 
         admin_user = Users(
             username='admin',
             email='admin@logstream.com',
-            password= 'DefNotAdmin',
-            team=admin_team
+            password= 'DefNotAdmin'
         )
 
         test_user = Users(
             username='test',
             email='test@test.com',
-            password= 'test',
-            team=admin_team
+            password= 'test'
         )
 
         admin_user.roles = [admin_role]
