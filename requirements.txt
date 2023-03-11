@@ -15,6 +15,7 @@ Flask-Mail==0.9.1
 Flask-Principal==0.4.0
 Flask-Security==3.0.0
 Flask-SQLAlchemy==2.5.1
+Flask-Caching==2.0.2
 Flask-WTF==1.0.1
 itsdangerous==2.0.1
 Jinja2==3.0.2
