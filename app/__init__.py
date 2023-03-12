@@ -40,8 +40,11 @@ except Exception as e:
 # by modules and views
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+# cache = Cache(config={'CACHE_TYPE': 'SimpleCache'})
+cache = Cache(config={'CACHE_TYPE': 'redis'})
 cache = Cache(app)
 mail = Mail(app)
+
 
 # Import a module / component using its blueprint handler variable (mod_auth)
 from app.server.views import main

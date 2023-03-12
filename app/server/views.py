@@ -184,6 +184,48 @@ def teams():
 
 
 
+
+# @cache.cached(timeout=10, key_prefix='func_get_cat')
+# @cache.memoize(timeout=30)
+def get_categories(game_session):
+    try:
+        categories = (
+            Challenges.query
+            .filter_by(
+                game_session=game_session
+            ).all()
+        ) 
+    except Exception as e:
+        print(f"got no results when trying to get categories {e}")
+        categories = []
+    
+    return categories
+
+# @cache.cached(timeout=10, key_prefix='func_get_chal')
+# @cache.memoize(timeout=30)
+def get_challenges_by_category(game_session, category_name):
+    # the category (name) is passed in as a URL paramter
+    # user that name to filter the database
+    if category_name:
+        challenges = (
+            Challenges.query
+            .filter_by(
+                game_session=game_session,
+                category=category_name
+            ).all()
+        )
+        if not challenges:
+            abort(404)
+    else:
+        challenges = (
+            Challenges.query
+            .filter_by(
+                game_session=game_session
+            ).all()
+        )
+    
+    return challenges
+
 ##################
 # Challenge solves
 #################
@@ -196,66 +238,42 @@ def challenges(game_session_id=None, category=None):
     if current_user.id not in game_session.registrants:
         abort(404)
 
-    try:
-        categories = (
-            Challenges.query
-            .filter_by(
-                game_session=game_session
-            ).all()
-        ) 
-    except Exception as e:
-        print(f"got no results when trying to get categories {e}")
-        categories = []
-
-    categories = list(set([c.category for c in categories]))
+    categories = list(set([c.category for c in get_categories(game_session)]))
     categories.sort()
 
-    if category:
-        challenges = (
-            Challenges.query
-            .filter_by(
-                game_session=game_session,
-                category=category
-            ).all()
-        )
-        if not challenges:
-            abort(404)
-    elif len(categories) > 0:
-        # just get stuff from the first category
-        challenges = (
-            Challenges.query
-            .filter_by(
-                game_session=game_session,
-                category=categories[0]
-            ).all()
-        )
-    else:
-        challenges = (
-            Challenges.query
-            .filter_by(
-                game_session=game_session
-            ).all()
-        )
-
-    # Get all users resgistered on this session
-    users = (
-        db.session.query(Users)
-        .join(Registrations, Registrations.user_id == Users.id)
-        .filter(Registrations.game_session_id == game_session_id)
-        .filter(~Users.id.in_([m.id for m in game_session.managers]))
-    ).all()
+    if not category:
+        category = categories[0]
+    challenges = get_challenges_by_category(game_session=game_session, category_name=category)
 
     questions = load_json_from_github("questions.json")
-
-    
 
     return render_template("main/challenges.html", 
                             challenges=challenges, 
                             categories=categories,
                             current_category = category,
                             game_session = game_session,
-                            users=users,
                             questions=questions)
+
+
+@cache.cached(timeout=300, key_prefix='func1')
+def get_session_registrants(game_session_id):
+    user_ids = GameSessions.query.get(game_session_id).registrants
+    users = Users.query.filter(Users.username!="admin").filter(Users.id.in_(user_ids)).all()
+    return users
+
+
+@cache.cached(timeout=10, key_prefix='func2')
+def get_user_teams_mapping(game_session: GameSessions):
+    teams_mapping = {}
+    for team in game_session.teams:
+        for member in team.members:
+            teams_mapping[member.id] =  {
+                "id":team.id,
+                "name":team.name,
+                "ranking":team.ranking,
+                "score":team.average_score
+            }
+    return teams_mapping
 
 
 @main.route("/rankings/<int:game_session_id>")
@@ -264,10 +282,14 @@ def rankings(game_session_id=None):
     if current_user.id not in game_session.registrants:
         abort(404)
 
-    user_ids = GameSessions.query.get(game_session_id).registrants
-    users = Users.query.filter(Users.username!="admin").filter(Users.id.in_(user_ids)).all()
+    users = get_session_registrants(game_session_id)
 
-    return render_template("main/rankings.html", users=users, game_session=game_session)
+    user_teams_mapping = get_user_teams_mapping(game_session=game_session)
+   
+    return render_template("main/rankings.html", 
+                            users=users,
+                             game_session=game_session,
+                             user_teams_mapping = user_teams_mapping)
 
 
 @main.route("/teams/<int:game_session_id>")
@@ -832,4 +854,3 @@ def event_setup():
         "admin_password": admin_password,
         "session_password": session_password
     })
-

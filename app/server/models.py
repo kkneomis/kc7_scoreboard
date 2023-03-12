@@ -294,8 +294,13 @@ class GameSessions(Base):
         return list(set([registration.user_id for registration in self.get_registrations()]))
 
     @property
+    # @cache.memoize(timeout=1000)
     def challenges(self) -> "list[int]":
         return list(set([registration.challenge_id for registration in self.get_registrations()]))
+
+    @property
+    def challenges_objects(self):
+        return [Challenges.query.get(challenge_id) for challenge_id in self.challenges]
 
     @property
     def solver_names(self) -> "list[str]":
@@ -330,7 +335,7 @@ class Team(Base):
     def __init__(self, name, game_session_id, owner_id):
         self.name = name
         self.game_session_id = game_session_id
-        self.owner_id = owner_id
+        self.owner_id = owner_id or 1
 
     @property
     def member_ids(self):
