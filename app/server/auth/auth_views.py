@@ -34,7 +34,11 @@ def login():
     remember_me = False
     if 'remember_me' in request.form:
         remember_me = True
-    registered_user = Users.query.filter_by(username=username).first()
+
+    registered_user = (
+        Users.query.filter_by(username=username).first() 
+        or Users.query.filter_by(email=username).first() #maybe they provided email address by accident
+    )
     # if the username or password is invalid
     if (registered_user is not None) and (registered_user.check_password(password)):
         login_user(registered_user, remember=remember_me)
