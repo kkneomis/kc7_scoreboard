@@ -233,7 +233,6 @@ def get_challenges_by_category(game_session, category_name):
 @main.route("/challenges/<int:game_session_id>/<string:category>")
 @login_required
 def challenges(game_session_id=None, category=None):
-
     game_session = GameSessions.query.get(game_session_id) or abort(404)
     if current_user.id not in game_session.registrants:
         abort(404)
@@ -253,6 +252,16 @@ def challenges(game_session_id=None, category=None):
                             current_category = category,
                             game_session = game_session,
                             questions=questions)
+
+@main.route("/analytics/<int:game_session_id>")
+@login_required
+def challenge_analytics(game_session_id=None):
+    game_session = GameSessions.query.get(game_session_id) or abort(404)
+    if not (game_session.is_managed_by(current_user) or current_user.has_role('Admin')):
+        flash("You can't be here slim", "error")
+        return redirect(url_for('main.rankings', game_session_id=game_session_id))
+
+    return render_template("admin/analytics.html", game_session=game_session) 
 
 
 @cache.cached(timeout=300, key_prefix='func1')

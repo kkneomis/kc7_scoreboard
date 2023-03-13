@@ -29,9 +29,17 @@
 
     <li class="nav-item active">
       <a class="nav-link" href="/teams/{{game_session.id}}">
-        <i class="fas fa-fw fa-trophy"></i>
+        <i class="fas fa-fw fa-people-arrows"></i>
         <span>Teams</span></a>
     </li>
+
+    {% if current_user.has_role('Admin') or game_session.is_managed_by(current_user) %}
+      <li class="nav-item active">
+        <a class="nav-link" href="/analytics/{{game_session.id}}">
+          <i class="fas fa-fw fa-chart-line"></i>
+          <span>Analytics</span></a>
+      </li>
+    {% endif %}
 
     <!-- Nav Item - Dashboard -->
     <li class="nav-item active">

@@ -1,0 +1,65 @@
+{% extends "main/base.html" %}
+{% block body %}
+
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.css">
+  
+  <!-- Page Heading -->
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Challenge Analytics</h1>
+  </div>
+
+    <div class="row">
+      <div class="col-md-12">
+        <!-- Bar Chart -->
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Users</h6>
+        </div>
+        <div class="card-body">
+          <table class="table" id="analyticsTable">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Question</th>
+                <th>Percentage</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+              {% for challenge in game_session.challenges %}
+              <tr>
+                <td>{{ challenge.category }}</td>
+                <td>{{ challenge.name}}</td>
+                <td>
+                    {{ (challenge.solver_names | length) }}
+                </td>
+                <td>
+                    {{ challenge.description}}
+                </td>
+              </tr>
+              {% endfor %}
+            </table>
+        </div>
+      </div>
+      <!-- Bar Chart -->
+      </div>
+    </div>
+
+    <script>
+      $(document).ready(function () {
+          var t = $('#analyticsTable').DataTable({
+              columnDefs: [
+                  {
+                      searchable: false,
+                      orderable: true,
+                      targets: 0,
+                  },
+              ],
+              order: [[0, 'desc']],
+              pageLength: 100
+          });
+      });
+      </script>
+
+        
+
+{% endblock %}

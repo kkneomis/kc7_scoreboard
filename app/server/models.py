@@ -294,15 +294,6 @@ class GameSessions(Base):
         return list(set([registration.user_id for registration in self.get_registrations()]))
 
     @property
-    # @cache.memoize(timeout=1000)
-    def challenges(self) -> "list[int]":
-        return list(set([registration.challenge_id for registration in self.get_registrations()]))
-
-    @property
-    def challenges_objects(self):
-        return [Challenges.query.get(challenge_id) for challenge_id in self.challenges]
-
-    @property
     def solver_names(self) -> "list[str]":
         """Take a list of user_ids for solvers and returns their names"""
         return list(set([solver.username for solver in self.get_solvers()]))

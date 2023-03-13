@@ -56,18 +56,20 @@
             </tr>
           </thead>
           <tbody>
-            {% for user in users %}
-            <tr>
-              <th scope="row">{{ user.get_place(game_session.id) }}</th>
-              <td>{{ user.username }}</td>
-              <td>{{ user.get_score_by_session(game_session.id) }} </td>
-              <td>{{ user.get_team_by_session_id(game_session.id).name }} </td>
-              {% if current_user.has_role('Admin') or game_session.is_managed_by(current_user) %}
-                <td>{{ user.get_team_by_session_id(game_session.id).average_score }} </td>
-                <td>{{ user.get_team_by_session_id(game_session.id).ranking }} </td>
-              {% endif %}
-            </tr>
-            {% endfor %}
+            {% cache 5 %}
+              {% for user in users %}
+              <tr>
+                <th scope="row">{{ user.get_place(game_session.id) }}</th>
+                <td>{{ user.username }}</td>
+                <td>{{ user.get_score_by_session(game_session.id) }} </td>
+                <td> {{ user_teams_mapping.get(user.id).name }} </td>
+                {% if current_user.has_role('Admin') or game_session.is_managed_by(current_user) %}
+                  <td> {{ user_teams_mapping.get(user.id).score }} </td>
+                  <td> {{ user_teams_mapping.get(user.id).ranking }} </td>
+                {% endif %}
+              </tr>
+              {% endfor %}
+            {% endcache %}
           </tbody>
         </table>
       </div>
