@@ -240,8 +240,9 @@ def challenges(game_session_id=None, category=None):
     categories = list(set([c.category for c in get_categories(game_session)]))
     categories.sort()
 
-    if not category:
+    if not category and categories:
         category = categories[0]
+        
     challenges = get_challenges_by_category(game_session=game_session, category_name=category)
 
     questions = load_json_from_github("questions.json")
